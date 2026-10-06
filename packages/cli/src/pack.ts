@@ -10,6 +10,7 @@ import tar from "tar-stream";
 export const DEFAULT_EXCLUDES: RegExp[] = [
   /(^|\/)\.git(\/|$)/,
   /(^|\/)node_modules(\/|$)/,
+  /^kitlane\.json$/,
   /(^|\/)\.env(\..*)?$/,
   /(^|\/)\.DS_Store$/,
   /\.(pem|key|p12|pfx)$/i,

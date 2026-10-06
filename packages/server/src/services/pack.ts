@@ -5,7 +5,7 @@ import { Readable } from "node:stream";
 import zlib from "node:zlib";
 import tar from "tar-stream";
 
-const DEFAULT_EXCLUDES = [/^\.git(\/|$)/, /^node_modules(\/|$)/, /(^|\/)\.env(\..*)?$/, /(^|\/)\.DS_Store$/, /\.(pem|key|p12|pfx)$/i, /(^|\/)\.npmrc$/];
+const DEFAULT_EXCLUDES = [/^\.git(\/|$)/, /^node_modules(\/|$)/, /^kitlane\.json$/, /^\.kitlaneignore$/, /(^|\/)\.env(\..*)?$/, /(^|\/)\.DS_Store$/, /\.(pem|key|p12|pfx)$/i, /(^|\/)\.npmrc$/];
 
 export async function listDeployableFiles(dir: string): Promise<string[]> {
   const out: string[] = [];

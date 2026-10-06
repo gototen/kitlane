@@ -8,6 +8,7 @@ import { openDatabase } from "./db/index.js";
 import { migrate } from "./db/migrate.js";
 import { LocalArtifactStorage } from "./services/storage.js";
 import { pruneSessions } from "./auth/sessions.js";
+import { pruneDiscoveryEvents } from "./services/discovery.js";
 import { ensureDevUsers } from "./seed.js";
 import { revokeAllUpdaterCredentials } from "./services/documents.js";
 import { findUserByHandle, setAdmin } from "./services/users.js";
@@ -53,8 +54,15 @@ async function main() {
     console.log(`[kitlane] portal: ${portalOrigin(config)}  tools: ${config.portalUrl.protocol}//app-<id>.${config.toolsDomain}  auth: ${config.authMode}`);
     if (config.authMode === "dev") console.log(`[kitlane] development identity enabled (local only). Open ${portalOrigin(config)}/.dev/login`);
   });
-  const timer = setInterval(() => pruneSessions(db).catch(() => undefined), 10 * 60_000);
+  const housekeeping = async () => {
+    await pruneSessions(db).catch(() => undefined);
+    if (config.discoveryRetentionDays > 0) {
+      await pruneDiscoveryEvents(db, config.discoveryRetentionDays).catch((err) => console.error("[kitlane] discovery retention failed", err));
+    }
+  };
+  const timer = setInterval(() => void housekeeping(), 10 * 60_000);
   timer.unref();
+  void housekeeping();
   const shutdown = async () => {
     clearInterval(timer);
     server.close();

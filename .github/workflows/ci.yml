@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm rebuild esbuild
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+  docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the server image
+        run: docker build -t kitlane/server:ci .
+      - name: Smoke-run the image with embedded Postgres
+        run: |
+          docker run -d --name kl -e KITLANE_AUTH_MODE=dev -e KITLANE_DATABASE_URL=pglite://memory -e KITLANE_PORTAL_URL=http://kit.localhost:3000 -p 3000:3000 kitlane/server:ci
+          for i in $(seq 1 30); do curl -fs http://localhost:3000/healthz && break; sleep 1; done
+          curl -fs http://localhost:3000/healthz
+          docker logs kl

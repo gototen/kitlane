@@ -46,6 +46,7 @@ export interface Config {
   toolCookieSameSite: "Lax" | "None" | "Strict";
   secureCookies: boolean;
   sessionTtlSeconds: number;
+  discoveryRetentionDays: number;
   limits: Limits;
   hosted: HostedPolicy;
   publicDir: string;
@@ -141,6 +142,7 @@ export function loadConfig(overrides: Partial<Record<string, string>> = {}): Con
     toolCookieSameSite: sameSite,
     secureCookies,
     sessionTtlSeconds: envInt("KITLANE_SESSION_TTL_SECONDS", 12 * 3600),
+    discoveryRetentionDays: envInt("KITLANE_DISCOVERY_RETENTION_DAYS", 90),
     limits: {
       maxUploadBytes: envInt("KITLANE_MAX_UPLOAD_BYTES", 50 * 1024 * 1024),
       maxFiles: envInt("KITLANE_MAX_FILES", 2000),
