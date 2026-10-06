@@ -45,7 +45,44 @@ async function main() {
     await db.close();
     return;
   }
-  if (command && command !== "serve") throw new Error(`unknown command: ${command}. Use serve, migrate, revoke-updaters, grant-admin`);
+  if (command === "doctor") {
+    // Setup checks for operators: configuration summary plus a few fail-fast probes.
+    const problems: string[] = [];
+    const warn: string[] = [];
+    console.log(`portal:          ${portalOrigin(config)}`);
+    console.log(`tool origins:    ${config.portalUrl.protocol}//app-<id>.${config.toolsDomain}`);
+    console.log(`auth mode:       ${config.authMode}`);
+    console.log(`database:        ${config.databaseUrl.replace(/:\/\/[^@]*@/, "://***@")}`);
+    console.log(`data dir:        ${config.dataDir}`);
+    console.log(`installation:    ${config.installationId}`);
+    console.log(`admins (config): ${config.adminUsers.size ? [...config.adminUsers].join(", ") : "(none; use grant-admin)"}`);
+    if (config.authMode === "dev") warn.push("development identity is enabled; never expose this instance beyond your machine");
+    if (config.portalUrl.protocol !== "https:" && config.authMode === "gateway") problems.push("gateway mode should run behind HTTPS (KITLANE_PORTAL_URL)");
+    const toolsHost = config.toolsDomain.split(":")[0];
+    const portalSite = config.portalUrl.hostname.split(".").slice(-2).join(".");
+    if (config.toolCookieSameSite === "Lax" && !(toolsHost === portalSite || toolsHost.endsWith(`.${portalSite}`))) {
+      warn.push("tool origins look cross-site to the portal; set KITLANE_TOOL_COOKIE_SAMESITE=None (requires HTTPS)");
+    }
+    try {
+      fs.accessSync(config.dataDir, fs.constants.W_OK);
+    } catch {
+      problems.push(`data dir is not writable: ${config.dataDir}`);
+    }
+    const counts = await db.query<{ users: number; entries: number; versions: number }>(
+      `SELECT (SELECT count(*)::int FROM users) AS users, (SELECT count(*)::int FROM entries) AS entries, (SELECT count(*)::int FROM versions) AS versions`,
+    );
+    console.log(`database ok:     ${counts.rows[0].users} users, ${counts.rows[0].entries} entries, ${counts.rows[0].versions} versions`);
+    const admins = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM users WHERE is_admin`);
+    if (admins.rows[0].n === 0 && config.adminUsers.size === 0) warn.push("no administrator exists yet; set KITLANE_ADMIN_USERS or run grant-admin after the first sign-in");
+    const sdk = fs.existsSync(`${config.publicDir}/sdk.js`);
+    if (!sdk) problems.push(`SDK bundle missing at ${config.publicDir}/sdk.js (run npm run build)`);
+    for (const w of warn) console.log(`warning: ${w}`);
+    for (const p of problems) console.log(`problem: ${p}`);
+    console.log(problems.length ? `doctor: ${problems.length} problem(s)` : "doctor: ok");
+    await db.close();
+    process.exit(problems.length ? 1 : 0);
+  }
+  if (command && command !== "serve") throw new Error(`unknown command: ${command}. Use serve, migrate, doctor, revoke-updaters, grant-admin`);
   if (config.authMode === "dev") await ensureDevUsers(db, config);
   const services = createServices(config, db, new LocalArtifactStorage(config.dataDir));
   const app = createApp(services);
