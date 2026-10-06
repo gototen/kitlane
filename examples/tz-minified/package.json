@@ -1,0 +1,17 @@
+{
+  "name": "@kitlane-examples/tz-minified",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Meeting time finder built with Preact and shipped only as a minified bundle, to validate adaptation from published files",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "preact": "^10.24.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

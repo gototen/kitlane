@@ -1,0 +1,18 @@
+{
+  "name": "@kitlane/sdk",
+  "version": "0.2.0",
+  "description": "Browser SDK for Kitlane hosted tools: identity, personal documents, shared collections",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
+  }
+}
