@@ -27,7 +27,8 @@ export async function searchEntries(q: Queryable, opts: SearchOptions): Promise<
   const term = opts.query.trim().toLowerCase();
   const params: unknown[] = [];
   const where: string[] = [];
-  let rank = "0";
+  // Without a term there is no relevance; a constant would be read as an ORDER BY column position.
+  let rank = "(CASE WHEN e.featured THEN 1 ELSE 0 END)";
   if (term) {
     params.push(term);
     const t = `$${params.length}`;

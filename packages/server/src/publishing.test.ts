@@ -206,6 +206,17 @@ describe("publishing through the CLI API", () => {
       expect(html).toContain("Also about meetings");
       expect(html).toContain("Open directly");
     });
+    it("filters the catalog by tag, creator, and kind without a search term", async () => {
+      const cookie = await h.portalCookie(alice);
+      const byTag = await h.req(`${PORTAL}/.search?tag=meetings`, { cookie });
+      expect(byTag.status).toBe(200);
+      const html = await byTag.text();
+      expect(html).toContain("Meeting finder");
+      expect(html).not.toContain('href="/other"');
+      expect((await h.req(`${PORTAL}/.search?creator=${bob.id}`, { cookie })).status).toBe(200);
+      expect((await h.req(`${PORTAL}/.search?kind=resource`, { cookie })).status).toBe(200);
+      expect((await h.req(`${PORTAL}/.api/cli/tools`, { headers: bearer(await h.token(alice)) })).status).toBe(200);
+    });
     it("redirects to the dev login when there is no portal session", async () => {
       const res = await h.req(`${PORTAL}/prep`, { redirect: "manual" });
       expect(res.status).toBe(302);
