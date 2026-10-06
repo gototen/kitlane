@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+data/
+/packages/server/public/*.js
+/packages/server/public/*.js.map
+/packages/server/public/*.css
+examples/*/dist/
+deploy/compose/data/
+deploy/compose/caddy-data/
+.DS_Store
+coverage/
