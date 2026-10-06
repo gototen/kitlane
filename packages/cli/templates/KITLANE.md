@@ -56,7 +56,7 @@ const tool = await kitlane.tool();        // { id, names, version, bindings: [{n
 const prefs = kitlane.user.collection("preferences");
 await prefs.set("display", { theme: "dark" });
 const doc = await prefs.get("display");    // { id, data, revision, updatedAt } or null
-await prefs.list({ where: [["kind", "eq", "note"]], orderBy: "createdAt", order: "desc", limit: 50 });
+await prefs.list({ where: [["kind", "eq", "note"]], orderBy: "savedAt", order: "desc", limit: 50 }); // fields of data
 await prefs.all();                          // follows cursors
 await prefs.delete("display");
 await prefs.bulk([{ op: "set", id: "a", data: {} }, { op: "delete", id: "b" }], { replaceAll: false });
