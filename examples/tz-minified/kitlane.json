@@ -1,0 +1,7 @@
+{
+  "name": "meet",
+  "title": "Meeting time finder",
+  "purpose": "Find a meeting time that works across time zones; saves your favourite cities.",
+  "tags": ["meetings", "timezones", "productivity"],
+  "deploy": "./dist"
+}

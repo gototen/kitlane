@@ -1,0 +1,44 @@
+# "Try locally": adds a Keycloak test identity provider with synthetic users and uses Caddy's
+# internal CA for https://kit.localhost and https://*.sites.kit.localhost.
+# Usage: docker compose -f docker-compose.yml -f compose.local.yml up -d --build
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    restart: unless-stopped
+    command: ["start", "--import-realm", "--http-enabled=true", "--proxy-headers=xforwarded", "--hostname=https://auth.${KITLANE_DOMAIN}", "--hostname-backchannel-dynamic=true"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: dev-file
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak/realm-kitlane.json:/opt/keycloak/data/import/realm-kitlane.json:ro
+      - keycloak-data:/opt/keycloak/data/h2
+    networks: [internal]
+
+  oauth2-proxy:
+    environment:
+      # Browser-facing endpoints go through Caddy (public hostname); server-to-server calls use the
+      # container network, so no TLS trust is needed inside the network.
+      OAUTH2_PROXY_SKIP_OIDC_DISCOVERY: "true"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: https://auth.${KITLANE_DOMAIN}/realms/kitlane
+      OAUTH2_PROXY_LOGIN_URL: https://auth.${KITLANE_DOMAIN}/realms/kitlane/protocol/openid-connect/auth
+      OAUTH2_PROXY_REDEEM_URL: http://keycloak:8080/realms/kitlane/protocol/openid-connect/token
+      OAUTH2_PROXY_OIDC_JWKS_URL: http://keycloak:8080/realms/kitlane/protocol/openid-connect/certs
+      OAUTH2_PROXY_PROFILE_URL: http://keycloak:8080/realms/kitlane/protocol/openid-connect/userinfo
+      OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: "true"
+    depends_on:
+      - kitlane
+      - keycloak
+
+  caddy:
+    volumes:
+      - ./caddy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - oauth2-proxy
+      - keycloak
+
+volumes:
+  keycloak-data:

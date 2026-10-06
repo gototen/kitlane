@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+**/dist
+data
+deploy/compose/data
+deploy/compose/.env
+.git
+*.md
+!packages/cli/templates/*.md

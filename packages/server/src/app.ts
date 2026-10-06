@@ -5,6 +5,7 @@ import { KitlaneError } from "./errors.js";
 import { portalApp } from "./routes/portal/index.js";
 import { toolApp } from "./routes/tool.js";
 import { errorPage } from "./views/pages.js";
+import { getEntry } from "./services/entries.js";
 
 export function errorHandler(config: Services["config"]) {
   return (err: Error, c: Context) => {
@@ -30,6 +31,19 @@ export function createApp(services: Services) {
   tool.onError(onError);
 
   app.get("/healthz", (c) => c.json({ ok: true, authMode: config.authMode }));
+
+  // Used by the TLS ingress for on-demand certificates. Host-independent and unauthenticated:
+  // it only answers whether a domain is this installation's portal or a registered tool host.
+  app.get("/.well-known/kitlane/host-check", async (c) => {
+    const domain = (c.req.query("domain") ?? "").toLowerCase();
+    if (domain === config.portalUrl.hostname) return c.text("ok");
+    const suffix = `.${config.toolsDomain.split(":")[0]}`;
+    if (domain.endsWith(suffix)) {
+      const m = /^app-([a-z0-9]{6,32})$/.exec(domain.slice(0, -suffix.length));
+      if (m && (await getEntry(services.db, m[1]))) return c.text("ok");
+    }
+    return c.text("unknown host", 404);
+  });
 
   // Host-based dispatch: the portal origin and each tool origin are different applications.
   app.all("*", async (c) => {

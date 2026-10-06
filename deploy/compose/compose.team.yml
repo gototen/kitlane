@@ -1,0 +1,9 @@
+# "Run for a team": your own OIDC provider (Okta, Entra ID, Google Workspace, Keycloak, ...),
+# public certificates from Let's Encrypt via Caddy, no development identity.
+# Usage: docker compose -f docker-compose.yml -f compose.team.yml up -d --build
+services:
+  caddy:
+    volumes:
+      - ./caddy/Caddyfile.team:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config

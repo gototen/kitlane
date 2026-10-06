@@ -1,0 +1,36 @@
+# Team deployment: public certificates. The portal host uses a normal ACME certificate.
+# Tool hosts (app-<id>.sites.<domain>) use on-demand TLS: Caddy asks Kitlane whether a host is
+# registered before issuing a certificate, so unknown names never trigger issuance.
+{
+	email {$ACME_EMAIL}
+	on_demand_tls {
+		ask http://kitlane:3000/.well-known/kitlane/host-check
+	}
+}
+
+{$KITLANE_DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+	}
+	reverse_proxy oauth2-proxy:4180 {
+		header_up X-Kitlane-Ingress-Secret {env.KITLANE_INGRESS_SECRET}
+		header_up X-Forwarded-Proto https
+	}
+}
+
+https:// {
+	tls {
+		on_demand
+	}
+	encode gzip
+	@tools host *.sites.{$KITLANE_DOMAIN}
+	handle @tools {
+		header Strict-Transport-Security "max-age=31536000"
+		reverse_proxy kitlane:3000 {
+			header_up X-Kitlane-Ingress-Secret {env.KITLANE_INGRESS_SECRET}
+			header_up X-Forwarded-Proto https
+		}
+	}
+	respond "Unknown host" 404
+}

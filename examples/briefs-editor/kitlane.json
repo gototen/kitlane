@@ -1,0 +1,7 @@
+{
+  "name": "briefs-editor",
+  "title": "Briefs editor",
+  "purpose": "Edit the shared company briefs that kit/prep reads.",
+  "tags": ["research", "editing"],
+  "deploy": "./index.html"
+}

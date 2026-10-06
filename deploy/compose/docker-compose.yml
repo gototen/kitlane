@@ -1,0 +1,118 @@
+# Kitlane reference installation: control service, Postgres, TLS ingress, identity proxy.
+# Use together with compose.local.yml (try locally, bundled Keycloak) or compose.team.yml
+# (run for a team, your own OIDC provider). See docs/install-try-locally.md and
+# docs/install-run-for-a-team.md.
+services:
+  kitlane:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: kitlane/server:0.2.0
+    restart: unless-stopped
+    environment:
+      KITLANE_DATABASE_URL: postgres://kitlane:${POSTGRES_PASSWORD}@postgres:5432/kitlane
+      KITLANE_PORTAL_URL: https://${KITLANE_DOMAIN}
+      KITLANE_TOOLS_DOMAIN: sites.${KITLANE_DOMAIN}
+      KITLANE_SHORTCUT: ${KITLANE_SHORTCUT:-kit}
+      KITLANE_AUTH_MODE: gateway
+      KITLANE_SECRET: ${KITLANE_SECRET}
+      KITLANE_INGRESS_SECRET: ${KITLANE_INGRESS_SECRET}
+      KITLANE_ADMIN_USERS: ${KITLANE_ADMIN_USERS:-}
+      KITLANE_INSTALLATION_ID: ${KITLANE_INSTALLATION_ID:-default}
+      KITLANE_EXPOSE_EMAIL: ${KITLANE_EXPOSE_EMAIL:-false}
+      KITLANE_REPORTING_CONTACT: ${KITLANE_REPORTING_CONTACT:-}
+      KITLANE_HOSTED_SCRIPT_SRC: ${KITLANE_HOSTED_SCRIPT_SRC:-}
+      KITLANE_HOSTED_CONNECT_SRC: ${KITLANE_HOSTED_CONNECT_SRC:-}
+      KITLANE_HOSTED_STYLE_SRC: ${KITLANE_HOSTED_STYLE_SRC:-}
+      KITLANE_HOSTED_FONT_SRC: ${KITLANE_HOSTED_FONT_SRC:-}
+      KITLANE_HOSTED_IMG_SRC: ${KITLANE_HOSTED_IMG_SRC:-}
+    volumes:
+      - kitlane-data:/data
+    depends_on:
+      - postgres
+    networks: [internal]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kitlane
+      POSTGRES_USER: kitlane
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kitlane -d kitlane"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+    restart: unless-stopped
+    environment:
+      OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+      OAUTH2_PROXY_UPSTREAMS: http://kitlane:3000
+      OAUTH2_PROXY_REVERSE_PROXY: "true"
+      OAUTH2_PROXY_PROVIDER: oidc
+      OAUTH2_PROXY_PROVIDER_DISPLAY_NAME: ${OIDC_DISPLAY_NAME:-Company sign-in}
+      OAUTH2_PROXY_CLIENT_ID: ${OIDC_CLIENT_ID}
+      OAUTH2_PROXY_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      OAUTH2_PROXY_OIDC_ISSUER_URL: ${OIDC_ISSUER_URL}
+      OAUTH2_PROXY_REDIRECT_URL: https://${KITLANE_DOMAIN}/oauth2/callback
+      OAUTH2_PROXY_EMAIL_DOMAINS: ${OIDC_EMAIL_DOMAINS:-*}
+      OAUTH2_PROXY_SCOPE: ${OIDC_SCOPE:-openid email profile}
+      OAUTH2_PROXY_USER_ID_CLAIM: ${OIDC_USER_ID_CLAIM:-sub}
+      OAUTH2_PROXY_OIDC_EMAIL_CLAIM: ${OIDC_EMAIL_CLAIM:-email}
+      OAUTH2_PROXY_OIDC_GROUPS_CLAIM: ${OIDC_TEAM_CLAIM:-team}
+      OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: ${OIDC_ALLOW_UNVERIFIED_EMAIL:-false}
+      # Host-only secure cookie: no cookie domain, so hosted tool origins cannot set or receive it.
+      OAUTH2_PROXY_COOKIE_SECRET: ${OAUTH2_PROXY_COOKIE_SECRET}
+      OAUTH2_PROXY_COOKIE_NAME: __Host-kitlane_gateway
+      OAUTH2_PROXY_COOKIE_SECURE: "true"
+      OAUTH2_PROXY_COOKIE_HTTPONLY: "true"
+      OAUTH2_PROXY_COOKIE_SAMESITE: lax
+      OAUTH2_PROXY_COOKIE_EXPIRE: 12h
+      OAUTH2_PROXY_COOKIE_REFRESH: 1h
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
+      OAUTH2_PROXY_PASS_USER_HEADERS: "true"
+      OAUTH2_PROXY_PASS_ACCESS_TOKEN: "false"
+      OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: "false"
+      OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      # Bearer-authenticated APIs validate their own credentials; static assets and health are public.
+      OAUTH2_PROXY_SKIP_AUTH_ROUTES: ^/\.api/(cli|updater)/,^/healthz$,^/\.well-known/,^/\.static/
+      # Browser XHRs get 401 instead of a redirect.
+      OAUTH2_PROXY_API_ROUTES: ^/\.api/
+      # Where a sign-in may return to: this installation only.
+      OAUTH2_PROXY_WHITELIST_DOMAINS: ${KITLANE_DOMAIN},.sites.${KITLANE_DOMAIN}
+    depends_on:
+      - kitlane
+    networks: [internal]
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    environment:
+      KITLANE_DOMAIN: ${KITLANE_DOMAIN}
+      KITLANE_INGRESS_SECRET: ${KITLANE_INGRESS_SECRET}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./caddy/${CADDYFILE:-Caddyfile.team}:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - oauth2-proxy
+    networks: [internal]
+
+volumes:
+  kitlane-data:
+  pg-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  internal:

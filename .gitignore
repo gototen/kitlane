@@ -7,7 +7,6 @@ dist/
 data/
 /packages/server/public/*.js
 /packages/server/public/*.js.map
-/packages/server/public/*.css
 examples/*/dist/
 deploy/compose/data/
 deploy/compose/caddy-data/

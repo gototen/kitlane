@@ -36,18 +36,6 @@ export function portalApp(services: Services) {
     return c.body(fs.readFileSync(full));
   });
 
-  // Used by the TLS ingress for on-demand certificates: is this host one of ours?
-  app.get("/.well-known/kitlane/host-check", async (c) => {
-    const domain = (c.req.query("domain") ?? "").toLowerCase();
-    if (domain === config.portalUrl.hostname) return c.text("ok");
-    const suffix = `.${config.toolsDomain.split(":")[0]}`;
-    if (domain.endsWith(suffix)) {
-      const m = /^app-([a-z0-9]{6,32})$/.exec(domain.slice(0, -suffix.length));
-      if (m && (await getEntry(db, m[1]))) return c.text("ok");
-    }
-    return c.text("unknown host", 404);
-  });
-
   // --- Updater API: scoped bearer credential only; never browser identity ---
   app.route("/.api/updater", updaterApp(services));
 

@@ -1,0 +1,7 @@
+{
+  "name": "prep",
+  "title": "Pre-call brief",
+  "purpose": "Turn public company facts into a one-page brief before a call.",
+  "tags": ["meetings", "research", "sales"],
+  "deploy": "./index.html"
+}

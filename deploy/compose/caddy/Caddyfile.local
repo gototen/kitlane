@@ -1,0 +1,31 @@
+# Local demonstration: Caddy's internal CA issues certificates for *.localhost names.
+# Trust the root certificate once (scripts/setup.sh prints how) so browsers accept them.
+{
+	local_certs
+	skip_install_trust
+}
+
+{$KITLANE_DOMAIN} {
+	tls internal
+	encode gzip
+	reverse_proxy oauth2-proxy:4180 {
+		header_up X-Kitlane-Ingress-Secret {env.KITLANE_INGRESS_SECRET}
+		header_up X-Forwarded-Proto https
+	}
+}
+
+*.sites.{$KITLANE_DOMAIN} {
+	tls internal
+	encode gzip
+	reverse_proxy kitlane:3000 {
+		header_up X-Kitlane-Ingress-Secret {env.KITLANE_INGRESS_SECRET}
+		header_up X-Forwarded-Proto https
+	}
+}
+
+auth.{$KITLANE_DOMAIN} {
+	tls internal
+	reverse_proxy keycloak:8080 {
+		header_up X-Forwarded-Proto https
+	}
+}

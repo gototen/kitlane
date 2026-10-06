@@ -1,0 +1,7 @@
+{
+  "name": "focus",
+  "title": "Focus timer",
+  "purpose": "A focus timer that remembers your preferences and logs sessions.",
+  "tags": ["productivity", "wellbeing"],
+  "deploy": "./index.html"
+}

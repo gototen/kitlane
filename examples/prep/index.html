@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Pre-call brief</title>
+  <style>
+    :root { --bg: #f6f7f9; --fg: #1b1f24; --muted: #5d6672; --card: #fff; --line: #dde1e6; --accent: #2457d6; --accent-fg: #fff; --notice-bg: #eef3ff; --notice-fg: #1c3a8a; --warn-bg: #fff4d6; --warn-fg: #5a4300; --error-bg: #fdecec; --error-fg: #b42318; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #101317; --fg: #e6e8eb; --muted: #9aa4b1; --card: #171b21; --line: #2a3039; --accent: #6b93ff; --accent-fg: #0b1226; --notice-bg: #172448; --notice-fg: #cdd9ff; --warn-bg: #3a2f10; --warn-fg: #ffe9a8; --error-bg: #3a1a1a; --error-fg: #ff7b72; } }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+    header { display: flex; align-items: center; gap: 1rem; padding: .6rem 1rem; border-bottom: 1px solid var(--line); background: var(--card); flex-wrap: wrap; }
+    header h1 { font-size: 1.1rem; margin: 0; }
+    .greeting { color: var(--muted); }
+    .status { margin-left: auto; font-size: .85rem; color: var(--muted); }
+    .status.fresh { color: var(--notice-fg); }
+    main { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; min-height: 0; }
+    nav { border-right: 1px solid var(--line); background: var(--card); display: flex; flex-direction: column; min-height: 0; }
+    nav .search { padding: .6rem; border-bottom: 1px solid var(--line); }
+    nav label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: .2rem; }
+    input, textarea { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: .4rem; padding: .45rem .6rem; width: 100%; }
+    input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+    nav ul { list-style: none; margin: 0; padding: .3rem; overflow: auto; flex: 1; }
+    nav li button { width: 100%; text-align: left; background: none; border: 0; border-radius: .4rem; padding: .5rem .6rem; cursor: pointer; font: inherit; color: inherit; display: flex; flex-direction: column; gap: .1rem; }
+    nav li button:hover { background: var(--bg); }
+    nav li button[aria-current="true"] { background: var(--notice-bg); color: var(--notice-fg); }
+    nav li .sector { font-size: .78rem; color: var(--muted); }
+    article { overflow: auto; padding: 1.2rem 1.5rem; }
+    .empty { color: var(--muted); max-width: 32rem; }
+    .brief-head { display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap; }
+    .brief-head h2 { margin: 0; font-size: 1.5rem; }
+    .meta { color: var(--muted); font-size: .9rem; display: flex; gap: .8rem; flex-wrap: wrap; }
+    section { margin-top: 1.2rem; }
+    section h3 { font-size: .82rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 .4rem; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: .7rem; padding: .9rem 1rem; }
+    ul.points { margin: 0; padding-left: 1.2rem; }
+    ul.points li { margin: .2rem 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; }
+    textarea { min-height: 8rem; resize: vertical; }
+    .notes-foot { display: flex; justify-content: space-between; font-size: .82rem; color: var(--muted); margin-top: .3rem; }
+    .banner { padding: .6rem .9rem; border-radius: .5rem; margin: .6rem 1rem 0; }
+    .banner.notice { background: var(--notice-bg); color: var(--notice-fg); }
+    .banner.warn { background: var(--warn-bg); color: var(--warn-fg); }
+    .banner.error { background: var(--error-bg); color: var(--error-fg); }
+    .banner[hidden] { display: none; }
+    button.link { background: none; border: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
+    @media (max-width: 720px) { main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } nav { border-right: 0; border-bottom: 1px solid var(--line); max-height: 40vh; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pre-call brief</h1>
+    <span class="greeting" id="greeting"></span>
+    <span class="status" id="status" role="status" aria-live="polite"></span>
+  </header>
+  <div class="banner" id="banner" hidden role="alert"></div>
+  <main>
+    <nav aria-label="Companies">
+      <div class="search">
+        <label for="search">Find a company</label>
+        <input id="search" type="search" placeholder="Name or sector" autocomplete="off">
+      </div>
+      <ul id="list" aria-label="Company list"></ul>
+    </nav>
+    <article id="brief" aria-live="polite">
+      <p class="empty">Pick a company on the left. Your notes are private to you and saved automatically.</p>
+    </article>
+  </main>
+  <script src="/._kitlane/sdk.js"></script>
+  <script>
+    (function () {
+      var briefs = kitlane.shared.collection("company-briefs");
+      var notes = kitlane.user.collection("notes");
+      var recent = kitlane.user.collection("recent");
+      var state = { items: [], revision: null, selected: null, filter: "", note: null, noteTimer: null, saving: false };
+      var $ = function (id) { return document.getElementById(id); };
+
+      function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+      function relativeTime(iso) {
+        if (!iso) return "unknown";
+        var diff = Date.now() - new Date(iso).getTime();
+        if (isNaN(diff)) return "unknown";
+        var m = Math.round(diff / 60000);
+        if (m < 1) return "just now";
+        if (m < 60) return m + " min ago";
+        var h = Math.round(m / 60);
+        if (h < 48) return h + " h ago";
+        return Math.round(h / 24) + " days ago";
+      }
+      function banner(kind, html) { var b = $("banner"); if (!html) { b.hidden = true; return; } b.className = "banner " + kind; b.innerHTML = html; b.hidden = false; }
+      function setStatus(text, fresh) { var s = $("status"); s.textContent = text; s.className = "status" + (fresh ? " fresh" : ""); }
+      function fail(err) {
+        if (err && err.code === "unauthenticated") banner("error", "Your session on this tool has expired. Reload the page to sign in again.");
+        else if (err && err.code === "frozen") banner("error", "This tool or its data has been frozen by an administrator. " + escapeHtml(err.message));
+        else if (err && err.code === "not_found" && /binding/.test(err.message || "")) banner("warn", "This tool is not bound to a <code>company-briefs</code> collection yet. A maintainer can bind one from the tool's detail page.");
+        else banner("error", "Something went wrong: " + escapeHtml(err && err.message ? err.message : String(err)));
+      }
+
+      function renderList() {
+        var q = state.filter.toLowerCase();
+        var items = state.items.filter(function (d) { return !q || (d.data.name || "").toLowerCase().indexOf(q) >= 0 || (d.data.sector || "").toLowerCase().indexOf(q) >= 0; });
+        $("list").innerHTML = items.length ? items.map(function (d) {
+          return '<li><button type="button" data-id="' + escapeHtml(d.id) + '" aria-current="' + (state.selected === d.id) + '"><span>' + escapeHtml(d.data.name) + '</span><span class="sector">' + escapeHtml(d.data.sector || "") + "</span></button></li>";
+        }).join("") : '<li><span class="sector" style="padding:.5rem .6rem;display:block">No matches.</span></li>';
+      }
+      function pointsList(arr) { return (arr && arr.length) ? '<ul class="points">' + arr.map(function (p) { return "<li>" + escapeHtml(p) + "</li>"; }).join("") + "</ul>" : '<p class="empty">Nothing recorded.</p>'; }
+
+      function renderBrief() {
+        var doc = state.items.find(function (d) { return d.id === state.selected; });
+        if (!doc) { $("brief").innerHTML = '<p class="empty">Pick a company on the left. Your notes are private to you and saved automatically.</p>'; return; }
+        var b = doc.data;
+        $("brief").innerHTML =
+          '<div class="brief-head"><h2>' + escapeHtml(b.name) + '</h2><div class="meta">' +
+          '<span>' + escapeHtml(b.sector || "") + '</span><span>' + escapeHtml(b.hq || "") + '</span>' +
+          (b.founded ? '<span>Founded ' + escapeHtml(b.founded) + '</span>' : "") +
+          (b.employees ? '<span>' + escapeHtml(Number(b.employees).toLocaleString()) + ' employees</span>' : "") +
+          '<span title="' + escapeHtml(b.updatedAt || "") + '">Updated ' + escapeHtml(relativeTime(b.updatedAt)) + '</span></div></div>' +
+          '<section><h3>Summary</h3><div class="card">' + escapeHtml(b.summary || "") + '</div></section>' +
+          '<div class="grid"><section><h3>Talking points</h3><div class="card">' + pointsList(b.talkingPoints) + '</div></section>' +
+          '<section><h3>Recent news</h3><div class="card">' + pointsList(b.recentNews) + '</div></section></div>' +
+          '<section><h3>Risks</h3><div class="card">' + pointsList(b.risks) + '</div></section>' +
+          '<section><h3>My notes <span style="text-transform:none;letter-spacing:0">(private to you)</span></h3>' +
+          '<label for="note" class="sr" style="position:absolute;left:-9999px">Notes for ' + escapeHtml(b.name) + '</label>' +
+          '<textarea id="note" placeholder="Questions to ask, context from last time, follow-ups…"></textarea>' +
+          '<div class="notes-foot"><span id="note-status">Loading notes…</span><span>Saved across your devices</span></div></section>';
+        var ta = $("note");
+        ta.disabled = true;
+        notes.get(doc.id).then(function (n) {
+          state.note = n;
+          ta.value = n ? (n.data.text || "") : "";
+          ta.disabled = false;
+          $("note-status").textContent = n ? "Last saved " + relativeTime(n.updatedAt) : "No notes yet";
+        }).catch(function (err) { $("note-status").textContent = "Could not load notes"; fail(err); });
+        ta.addEventListener("input", function () {
+          $("note-status").textContent = "Typing…";
+          clearTimeout(state.noteTimer);
+          state.noteTimer = setTimeout(function () { saveNote(doc.id, ta.value); }, 700);
+        });
+      }
+
+      function saveNote(companyId, text) {
+        if (state.selected !== companyId) return;
+        var expected = state.note ? state.note.revision : 0;
+        $("note-status").textContent = "Saving…";
+        notes.set(companyId, { text: text, companyId: companyId }, { ifRevision: expected }).then(function (saved) {
+          state.note = saved;
+          $("note-status").textContent = "Saved just now";
+        }).catch(function (err) {
+          if (err && err.code === "conflict") {
+            var current = err.current || null;
+            state.note = current;
+            var ta = $("note");
+            if (ta) ta.value = current ? (current.data.text || "") : "";
+            $("note-status").textContent = "Reloaded a newer version";
+            banner("warn", "Your notes for this company were changed somewhere else (another tab or device). The newer version has been loaded; your last edit was not saved. <button class=\"link\" type=\"button\" id=\"dismiss\">Dismiss</button>");
+            var d = $("dismiss"); if (d) d.onclick = function () { banner(); };
+          } else { $("note-status").textContent = "Could not save"; fail(err); }
+        });
+      }
+
+      function select(id, remember) {
+        state.selected = id;
+        state.note = null;
+        clearTimeout(state.noteTimer);
+        renderList();
+        renderBrief();
+        var doc = state.items.find(function (d) { return d.id === id; });
+        if (doc) kitlane.shell.setTitle(doc.data.name);
+        if (remember !== false) recent.set("last", { companyId: id, at: new Date().toISOString() }).catch(function () {});
+      }
+
+      function applyList(result, fresh) {
+        state.items = result.items.slice().sort(function (a, b) { return (a.data.name || "").localeCompare(b.data.name || ""); });
+        state.revision = result.revision == null ? state.revision : result.revision;
+        renderList();
+        if (state.selected) renderBrief();
+        setStatus(fresh ? "Briefs updated just now" : state.items.length + " briefs", fresh);
+        if (fresh) setTimeout(function () { setStatus(state.items.length + " briefs", false); }, 8000);
+      }
+
+      function refresh() {
+        briefs.listIfChanged(state.revision, { limit: 200 }).then(function (r) { if (r) applyList(r, true); }).catch(function (err) { if (err.code !== "network") fail(err); });
+      }
+
+      $("search").addEventListener("input", function (e) { state.filter = e.target.value; renderList(); });
+      $("list").addEventListener("click", function (e) { var btn = e.target.closest("button[data-id]"); if (btn) select(btn.getAttribute("data-id")); });
+
+      kitlane.me().then(function (me) { $("greeting").textContent = "Hi " + me.displayName + (me.team ? " (" + me.team + ")" : ""); }).catch(fail);
+      kitlane.tool().then(function (t) {
+        if (!t.bindings.some(function (b) { return b.name === "company-briefs"; })) {
+          banner("warn", "This tool is not bound to a <code>company-briefs</code> collection yet. A maintainer can bind one from the tool's detail page.");
+          return;
+        }
+        return briefs.list({ limit: 200 }).then(function (r) {
+          applyList(r, false);
+          return recent.get("last").then(function (last) {
+            if (last && state.items.some(function (d) { return d.id === last.data.companyId; })) select(last.data.companyId, false);
+          });
+        }).then(function () { kitlane.onRefresh(refresh, { intervalMs: 60000 }); });
+      }).catch(fail);
+    })();
+  </script>
+</body>
+</html>
