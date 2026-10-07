@@ -80,7 +80,7 @@ Audited: entry creation, metadata changes, lifecycle, feature flag, freeze and u
 - Hosted JavaScript is executable, employee-authored content. It can act on inputs people give it and, within the Content-Security-Policy, could attempt to exfiltrate data through allowed destinations. The policy is a mitigation, not a guarantee.
 - A freeze cannot retract content already delivered to a browser or already cached by it.
 - Freezing an external entry blocks platform launches and recommendations only; the external host must separately revoke access.
-- The Compose package and its gateway configuration have not yet been executed by the authors.
+- The Compose local profile was executed once and its gateway configuration verified with curl (identity headers only accepted with the ingress secret; forged headers ignored; API routes answer 401). The team profile has not been executed.
 - Discovery analytics use pseudonymous identifiers, which are still potentially personal data under some policies.
 
 ## Reporting and response

@@ -29,9 +29,15 @@ Build started 2026-10-06. Release target 2026-10-24. The specification's week-1 
 - CLI against the development server: login, whoami, tool, pull, publish (name claim and unchanged detection), init.
 - Updater script refresh observed by a reader on the next fetch.
 
+### Executed after the first draft
+
+- 2026-10-07: the local Compose profile (control service, Postgres 16, oauth2-proxy 7.7.1, Caddy 2.8, Keycloak 26) was built and run on macOS with Docker 20.10 / Compose v2.0. Verified with curl through Caddy: Keycloak sign-in via oauth2-proxy, the host-only gateway cookie, the portal as the signed-in user, administrator mapping from `KITLANE_ADMIN_USERS`, forged identity headers ignored, a CLI token and `kitlane publish` over HTTPS, the per-origin tool sign-in round trip with the `__Host-` tool cookie, the hosted document served on its own HTTPS origin, `kitlane.me()` returning the mapped team, and unauthenticated SDK and direct launches refused or redirected. Three defects were found and fixed in the process (Keycloak volume permissions, missing built-in client scopes, the email header claim).
+
 ### Written but not executed
 
-- The Docker Compose package, including the Keycloak and oauth2-proxy configuration, Caddy certificates, and the backup and restore scripts. Docker was not running on the build machine. Installers should follow the verification checklist in `docs/install-try-locally.md` and report results.
+- The browser walk-through of the Compose path with the trusted local CA.
+- The team profile (`compose.team.yml`: ACME certificates and on-demand TLS for tool hosts).
+- The backup and restore scripts.
 
 ### Not performed
 

@@ -29,7 +29,7 @@ Edit `.env`:
 | `OIDC_ISSUER_URL` | Your provider's issuer, for example `https://login.example.com/realms/corp` or `https://accounts.google.com` |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | From the client you created |
 | `OIDC_EMAIL_DOMAINS` | `example.com` (comma separated), or `*` to admit anyone the provider authenticates |
-| `OIDC_USER_ID_CLAIM` | `sub` (recommended; a stable opaque identifier) |
+| `OIDC_USER_ID_CLAIM` | `email` (the claim oauth2-proxy forwards as `X-Forwarded-Email`; the subject is always forwarded as `X-Forwarded-User`) |
 | `OIDC_TEAM_CLAIM` | The claim carrying a team or department, if your provider can emit one; otherwise leave the default and teams will be unknown |
 | `KITLANE_ADMIN_USERS` | Comma separated emails or subjects of the initial administrators; they become administrators on first sign-in |
 | `KITLANE_REPORTING_CONTACT` | An email address or URL where people report a problematic tool; shown in the portal footer |

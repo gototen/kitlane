@@ -22,7 +22,7 @@ The rail is the primary discovery mechanism. A portal with search and browsing e
 | Discovery measurement with a north-star report | Implemented, tested |
 | Catalog export; operator backup and restore scripts | Implemented; scripts untested |
 | `kitlane init` with bounded agent guidance | Implemented, tested |
-| Docker Compose package with oauth2-proxy, Caddy, Postgres, optional Keycloak | Written, **not yet run** |
+| Docker Compose package with oauth2-proxy, Caddy, Postgres, optional Keycloak | Local profile run and verified end to end on 2026-10-07 (curl); team profile and backup/restore scripts not yet run |
 | Optional AI gateway (`kitlane.ai.chat`) | Deferred; design in [docs/deferred/ai-adapter.md](docs/deferred/ai-adapter.md) |
 
 ## Quick start
@@ -51,7 +51,7 @@ docker compose -f docker-compose.yml -f compose.local.yml up -d --build
 ./scripts/trust-local-ca.sh
 ```
 
-Then open <https://kit.localhost> and sign in as `alice` / `password`. This path was written against the documented behaviour of each component but has not yet been executed by the authors; see the caveat in [docs/install-try-locally.md](docs/install-try-locally.md).
+Then open <https://kit.localhost> and sign in as `alice` / `password`. This path was run on 2026-10-07: Keycloak sign-in through oauth2-proxy, the portal session, a CLI publish over HTTPS, and the per-origin tool sign-in were verified with curl against the running stack. See the remaining caveats in [docs/install-try-locally.md](docs/install-try-locally.md).
 
 ### Run for a team
 

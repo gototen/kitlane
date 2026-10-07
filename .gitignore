@@ -12,3 +12,6 @@ deploy/compose/data/
 deploy/compose/caddy-data/
 .DS_Store
 coverage/
+# Compose working files: generated secrets, local CA, operator backups
+deploy/compose/backups/
+deploy/compose/caddy-local-root.crt

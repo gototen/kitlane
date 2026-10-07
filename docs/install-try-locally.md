@@ -7,7 +7,7 @@ Two reproducible local experiences come from the same repository. Both use synth
 | A. Development mode | Visibly labelled development identity (local only) | Plain HTTP on `kit.localhost:3000` | Node 22+ |
 | B. Compose with Keycloak | Real OIDC sign-in through oauth2-proxy | HTTPS from Caddy's local certificate authority | Docker with Compose v2 |
 
-**Caveat for path B.** The Compose package was written against the documented behaviour of oauth2-proxy, Caddy, Keycloak, and Postgres, but it has not yet been executed by the authors: Docker was not running on the machine where this release was built. Treat it as a draft that needs an installer's verification. The checklist at the end of this document says what to verify and how to report problems.
+**Status of path B.** The Compose package was run on 2026-10-07 on macOS with Docker 20.10 / Compose v2.0: all five containers start, Keycloak imports the realm, and the full sign-in path (Keycloak login through oauth2-proxy, portal session, CLI publish over HTTPS, per-origin tool session, hosted document served) was verified with curl using the local CA. Not yet verified: the same flow in a browser with the trusted CA, the team profile (ACME and on-demand TLS), and the backup and restore scripts. Running it surfaced and fixed three issues (an unwritable Keycloak volume, missing built-in client scopes, and the email header mapping), so expect that other environments may surface more; please report them.
 
 ## A. Development mode (no Docker)
 
