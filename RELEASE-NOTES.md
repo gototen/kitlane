@@ -36,9 +36,10 @@ Build started 2026-10-06. Release target 2026-10-24. The specification's week-1 
 - 2026-10-07: the stack was reset and started from empty volumes: the control service waited for Postgres instead of crashing, migrations applied, Keycloak imported the realm, `docker compose run --rm kitlane seed` published the four demonstration tools and the shared collection inside the container, and a Keycloak sign-in as `bob` adopted the seeded owner (his tools appear under My tools).
 - 2026-10-07: `scripts/backup.sh` and `scripts/restore.sh` were run against the local stack: the dump, the deployed-files archive, and the env copy were produced; the restore replaced the database and files, restarted the control service, revoked updater credentials, and the published tool survived.
 
+- 2026-10-07: browser walk-through of the Compose path in Chrome with Caddy's local CA trusted: Keycloak sign-in as `bob`, the portal over HTTPS, the prep shell with one automatic tool-origin sign-in round trip, the hosted prep document on its own HTTPS origin, the drawer with cards from other creators, and launching `kit/meet` from the drawer with its own automatic round trip.
+
 ### Written but not executed
 
-- The browser walk-through of the Compose path with the trusted local CA.
 - The team profile (`compose.team.yml`: ACME certificates and on-demand TLS for tool hosts).
 
 ### Not performed
