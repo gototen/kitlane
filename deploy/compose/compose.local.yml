@@ -12,8 +12,9 @@ services:
       KC_DB: dev-file
       KC_HEALTH_ENABLED: "true"
     volumes:
+      # The realm (clients, test users) is re-imported on every start. Keycloak's dev-file database is
+      # deliberately not persisted: the bundled Keycloak is a demonstration identity provider only.
       - ./keycloak/realm-kitlane.json:/opt/keycloak/data/import/realm-kitlane.json:ro
-      - keycloak-data:/opt/keycloak/data/h2
     networks: [internal]
 
   oauth2-proxy:
@@ -39,6 +40,3 @@ services:
     depends_on:
       - oauth2-proxy
       - keycloak
-
-volumes:
-  keycloak-data:

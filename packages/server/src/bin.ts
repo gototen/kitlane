@@ -14,11 +14,25 @@ import { revokeAllUpdaterCredentials } from "./services/documents.js";
 import { findUserByHandle, setAdmin } from "./services/users.js";
 import { systemActor } from "./types.js";
 
+/** The database may still be starting when the service starts (for example under Docker Compose). */
+async function migrateWithRetry(db: Awaited<ReturnType<typeof openDatabase>>, attempts: number): Promise<string[]> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await migrate(db);
+    } catch (err: any) {
+      const transient = ["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "57P03", "ECONNRESET"].includes(err?.code) || /starting up|Connection terminated/i.test(String(err?.message));
+      if (!transient || attempt >= attempts) throw err;
+      if (attempt === 1 || attempt % 5 === 0) console.log(`[kitlane] waiting for the database (${err.code ?? err.message})...`);
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+}
+
 async function main() {
   const config = loadConfig();
   fs.mkdirSync(config.dataDir, { recursive: true });
   const db = await openDatabase(config.databaseUrl);
-  const ran = await migrate(db);
+  const ran = await migrateWithRetry(db, config.databaseUrl.startsWith("pglite") ? 1 : 30);
   if (ran.length) console.log(`[kitlane] applied migrations: ${ran.join(", ")}`);
 
   const [command, ...args] = process.argv.slice(2);

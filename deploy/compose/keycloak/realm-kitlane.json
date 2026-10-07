@@ -20,18 +20,12 @@
       "directAccessGrantsEnabled": false,
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["https://kit.localhost/oauth2/callback"],
-      "webOrigins": ["https://kit.localhost"],
-      "defaultClientScopes": ["openid", "email", "profile", "team"],
-      "optionalClientScopes": []
-    }
-  ],
-  "clientScopes": [
-    {
-      "name": "team",
-      "description": "Approved team attribute for Kitlane",
-      "protocol": "openid-connect",
-      "attributes": { "include.in.token.scope": "false", "display.on.consent.screen": "false" },
+      "redirectUris": [
+        "https://kit.localhost/oauth2/callback"
+      ],
+      "webOrigins": [
+        "https://kit.localhost"
+      ],
       "protocolMappers": [
         {
           "name": "team",
@@ -52,9 +46,85 @@
     }
   ],
   "users": [
-    { "username": "alice", "enabled": true, "emailVerified": true, "firstName": "Alice", "lastName": "Nakamura", "email": "alice@example.test", "attributes": { "team": ["finance"] }, "credentials": [{ "type": "password", "value": "password", "temporary": false }] },
-    { "username": "bob", "enabled": true, "emailVerified": true, "firstName": "Bob", "lastName": "Okafor", "email": "bob@example.test", "attributes": { "team": ["marketing"] }, "credentials": [{ "type": "password", "value": "password", "temporary": false }] },
-    { "username": "carol", "enabled": true, "emailVerified": true, "firstName": "Carol", "lastName": "Lindqvist", "email": "carol@example.test", "attributes": { "team": ["research"] }, "credentials": [{ "type": "password", "value": "password", "temporary": false }] },
-    { "username": "dave", "enabled": true, "emailVerified": true, "firstName": "Dave", "lastName": "Patel", "email": "dave@example.test", "attributes": { "team": ["engineering"] }, "credentials": [{ "type": "password", "value": "password", "temporary": false }] }
+    {
+      "username": "alice",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Nakamura",
+      "email": "alice@example.test",
+      "attributes": {
+        "team": [
+          "finance"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Bob",
+      "lastName": "Okafor",
+      "email": "bob@example.test",
+      "attributes": {
+        "team": [
+          "marketing"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "carol",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Carol",
+      "lastName": "Lindqvist",
+      "email": "carol@example.test",
+      "attributes": {
+        "team": [
+          "research"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "dave",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Dave",
+      "lastName": "Patel",
+      "email": "dave@example.test",
+      "attributes": {
+        "team": [
+          "engineering"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    }
   ]
 }
