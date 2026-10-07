@@ -20,7 +20,7 @@ cd deploy/compose
 ./scripts/restore.sh <backup dir>
 ```
 
-`backup.sh` runs `pg_dump` inside the Postgres container, archives the `kitlane-data` volume with a helper container, and copies `.env`. `restore.sh` stops the control service, restores the dump into a fresh database and swaps it in, replaces the volume contents, restarts the service, and then runs `kitlane-server revoke-updaters`. These scripts were written for Compose v2 and have not yet been executed by the authors; test them on a throwaway installation first.
+`backup.sh` runs `pg_dump` inside the Postgres container, archives the `kitlane-data` volume with a helper container, and copies `.env`. `restore.sh` stops the control service, restores the dump into a fresh database and swaps it in, replaces the volume contents, restarts the service, and then runs `kitlane-server revoke-updaters`. Both scripts were run once on 2026-10-07 against the local Compose stack (Compose v2.0 on macOS): the backup produced all three files and the restore brought the catalog and deployed files back with the control service healthy. Still test them on a throwaway installation before relying on them for a team.
 
 ## Restoring into a different installation
 
