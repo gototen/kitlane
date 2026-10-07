@@ -20,7 +20,7 @@ Build started 2026-10-06. Release target 2026-10-24. The specification's week-1 
 - Discovery measurement events and a north-star report with stated limits.
 - `kitlane init` with bounded guidance (`KITLANE.md`, `kitlane.json`, pointer in `AGENTS.md`/`CLAUDE.md`); `kitlane pull` with safe extraction.
 - Development identity (local only) and seed data: four hosted tools, two links, one shared collection with twelve synthetic briefs, grants, and an updater credential; `examples/updater/refresh-briefs.mjs`.
-- Docker Compose reference package: control service, Postgres 16, oauth2-proxy 7.7.1, Caddy 2.8; local profile with Keycloak 26 and an internal CA; team profile with ACME and on-demand TLS gated by a host check; setup, CA trust, backup, and restore scripts; server subcommands `migrate`, `doctor`, `revoke-updaters`, `grant-admin`.
+- Docker Compose reference package: control service, Postgres 16, oauth2-proxy 7.7.1, Caddy 2.8; local profile with Keycloak 26 and an internal CA; team profile with ACME and on-demand TLS gated by a host check; setup, CA trust, backup, and restore scripts; server subcommands `migrate`, `doctor`, `seed`, `revoke-updaters`, `grant-admin`.
 
 ### Verified
 

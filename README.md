@@ -49,6 +49,7 @@ cd deploy/compose
 ./scripts/setup.sh
 docker compose -f docker-compose.yml -f compose.local.yml up -d --build
 ./scripts/trust-local-ca.sh
+docker compose -f docker-compose.yml -f compose.local.yml run --rm kitlane seed   # optional demo data
 ```
 
 Then open <https://kit.localhost> and sign in as `alice` / `password`. This path was run on 2026-10-07: Keycloak sign-in through oauth2-proxy, the portal session, a CLI publish over HTTPS, and the per-origin tool sign-in were verified with curl against the running stack. See the remaining caveats in [docs/install-try-locally.md](docs/install-try-locally.md).

@@ -9,7 +9,7 @@ import { migrate } from "./db/migrate.js";
 import { LocalArtifactStorage } from "./services/storage.js";
 import { pruneSessions } from "./auth/sessions.js";
 import { pruneDiscoveryEvents } from "./services/discovery.js";
-import { ensureDevUsers } from "./seed.js";
+import { ensureDevUsers, runSeed } from "./seed.js";
 import { revokeAllUpdaterCredentials } from "./services/documents.js";
 import { findUserByHandle, setAdmin } from "./services/users.js";
 import { systemActor } from "./types.js";
@@ -96,7 +96,14 @@ async function main() {
     await db.close();
     process.exit(problems.length ? 1 : 0);
   }
-  if (command && command !== "serve") throw new Error(`unknown command: ${command}. Use serve, migrate, doctor, revoke-updaters, grant-admin`);
+  if (command === "seed") {
+    // Loads the synthetic demonstration tools and data. In gateway mode the synthetic owners are
+    // adopted by the first real sign-in with a matching email address (see upsertUserFromIdentity).
+    await runSeed(db, config);
+    await db.close();
+    return;
+  }
+  if (command && command !== "serve") throw new Error(`unknown command: ${command}. Use serve, migrate, doctor, seed, revoke-updaters, grant-admin`);
   if (config.authMode === "dev") await ensureDevUsers(db, config);
   const services = createServices(config, db, new LocalArtifactStorage(config.dataDir));
   const app = createApp(services);

@@ -141,5 +141,5 @@ These are ordinary code boundaries, not a plugin system.
 
 - Secrets: `KITLANE_SECRET` signs one-time codes and pseudonymous analytics keys; `KITLANE_INGRESS_SECRET` gates identity headers. Both are required in gateway mode. In dev mode a secret is generated into `<data dir>/secret.key`.
 - Sessions expire after `KITLANE_SESSION_TTL_SECONDS` (default 12 hours); expired sessions and stale codes are pruned every 10 minutes while serving.
-- Server subcommands: `kitlane-server serve` (default), `migrate`, `doctor` (configuration summary and fail-fast checks), `revoke-updaters [reason]`, `grant-admin <user id | external id | email>`.
+- Server subcommands: `kitlane-server serve` (default), `migrate`, `doctor` (configuration summary and fail-fast checks), `seed` (demonstration tools and data), `revoke-updaters [reason]`, `grant-admin <user id | external id | email>`.
 - Health: `GET /healthz`. Certificate check for on-demand TLS: `GET /.well-known/kitlane/host-check?domain=<host>` (host-independent, unauthenticated, answers only whether the domain is this installation's portal or a registered tool host).

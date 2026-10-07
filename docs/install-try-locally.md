@@ -87,6 +87,7 @@ cd deploy/compose
 ./scripts/setup.sh                      # copies .env.example to .env and generates secrets
 docker compose -f docker-compose.yml -f compose.local.yml up -d --build
 ./scripts/trust-local-ca.sh             # exports Caddy's local root certificate and prints how to trust it
+docker compose -f docker-compose.yml -f compose.local.yml run --rm kitlane seed   # demo tools and data (optional)
 ```
 
 Trust the certificate once:
@@ -108,6 +109,8 @@ npx kitlane publish examples/briefs-editor --name briefs-editor
 npx kitlane publish examples/focus --name focus
 npm run build -w examples/tz-minified && npx kitlane publish examples/tz-minified/dist --name meet
 ```
+
+The optional `seed` step publishes the same demonstration tools as the npm path. Their synthetic owners are adopted by the first real sign-in with a matching email address, so signing in to Keycloak as `alice` makes you the owner of `kit/prep`.
 
 Then create the `company-briefs` collection from `kit/prep`'s detail page, bind it in `kit/briefs-editor`, grant the editor as a writer context, create an updater credential, and run `examples/updater/refresh-briefs.mjs` with it.
 

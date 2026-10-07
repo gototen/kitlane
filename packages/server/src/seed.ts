@@ -35,10 +35,7 @@ export async function ensureDevUsers(db: Db, config: Config) {
   return out;
 }
 
-async function main() {
-  const config = loadConfig();
-  const db = await openDatabase(config.databaseUrl);
-  await migrate(db);
+export async function runSeed(db: Db, config: Config): Promise<void> {
   const storage = new LocalArtifactStorage(config.dataDir);
   const [alice, bob, carol, dave] = await ensureDevUsers(db, config);
   const aliceUser = (await db.query(`SELECT * FROM users WHERE id = $1`, [alice.id])).rows[0];
@@ -47,7 +44,6 @@ async function main() {
   const existing = await entries.getEntryByName(db, "prep");
   if (existing) {
     console.log("Seed data already present (kit/prep exists). Nothing to do.");
-    await db.close();
     return;
   }
 
@@ -98,8 +94,19 @@ async function main() {
   fs.writeFileSync(envFile, `KITLANE_URL=${portalOrigin(config)}\nKITLANE_UPDATER_TOKEN=${token}\nKITLANE_COLLECTION_ID=${briefs.id}\n`, { mode: 0o600 });
   console.log(`\nupdater credential written to ${envFile} (local demo only; never commit it)`);
   console.log(`try:  set -a; source ${envFile}; set +a; node examples/updater/refresh-briefs.mjs`);
-  console.log(`\nOpen ${portalOrigin(config)}/.dev/login and pick a user.`);
-  await db.close();
+  if (config.authMode === "dev") console.log(`\nOpen ${portalOrigin(config)}/.dev/login and pick a user.`);
+  else console.log(`\nSign in at ${portalOrigin(config)}; a real account whose email matches a synthetic owner (alice@example.test, ...) adopts that owner's tools.`);
+}
+
+async function main() {
+  const config = loadConfig();
+  const db = await openDatabase(config.databaseUrl);
+  await migrate(db);
+  try {
+    await runSeed(db, config);
+  } finally {
+    await db.close();
+  }
 }
 
 const isDirect = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

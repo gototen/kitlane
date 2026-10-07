@@ -54,6 +54,19 @@ export async function upsertUserFromIdentity(q: Queryable, config: Config, claim
     );
     return r.rows[0];
   }
+  if (!opts.devUser && claims.email) {
+    // A synthetic (seeded) user with the same email is adopted by the first real sign-in, so the
+    // demonstration tools get a real owner. Only rows marked is_dev_user are eligible.
+    const seeded = await q.query<User>(`SELECT * FROM users WHERE lower(email) = lower($1) AND is_dev_user LIMIT 1`, [claims.email]);
+    if (seeded.rows[0]) {
+      const r = await q.query<User>(
+        `UPDATE users SET external_id = $2, display_name = $3, team = COALESCE($4, team), is_admin = (is_admin OR $5), is_dev_user = FALSE, last_seen_at = now()
+         WHERE id = $1 RETURNING *`,
+        [seeded.rows[0].id, claims.externalId, displayName, claims.team ?? null, admin],
+      );
+      return r.rows[0];
+    }
+  }
   const r = await q.query<User>(
     `INSERT INTO users (id, external_id, display_name, email, team, is_admin, is_dev_user)
      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
