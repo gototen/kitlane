@@ -3,6 +3,14 @@
 # After restore, every updater credential is revoked: reissue them for the destination installation.
 set -eu
 cd "$(dirname "$0")/.."
+# Use the same overlay as the running stack (local profile with Keycloak, or team profile).
+if [ -z "${COMPOSE_FILE:-}" ]; then
+  if grep -q '^CADDYFILE=Caddyfile.local' .env 2>/dev/null; then
+    export COMPOSE_FILE="docker-compose.yml:compose.local.yml"
+  else
+    export COMPOSE_FILE="docker-compose.yml:compose.team.yml"
+  fi
+fi
 SRC="${1:?usage: restore.sh <backup dir>}"
 [ -f "$SRC/kitlane.pgdump" ] || { echo "missing $SRC/kitlane.pgdump"; exit 1; }
 [ -f "$SRC/kitlane-data.tar.gz" ] || { echo "missing $SRC/kitlane-data.tar.gz"; exit 1; }

@@ -3,6 +3,14 @@
 # (it contains personal documents, credential hashes, and identity mapping). Protect it accordingly.
 set -eu
 cd "$(dirname "$0")/.."
+# Use the same overlay as the running stack (local profile with Keycloak, or team profile).
+if [ -z "${COMPOSE_FILE:-}" ]; then
+  if grep -q '^CADDYFILE=Caddyfile.local' .env 2>/dev/null; then
+    export COMPOSE_FILE="docker-compose.yml:compose.local.yml"
+  else
+    export COMPOSE_FILE="docker-compose.yml:compose.team.yml"
+  fi
+fi
 OUT="${1:-./backups/kitlane-$(date -u +%Y%m%dT%H%M%SZ)}"
 mkdir -p "$OUT"
 echo "dumping database..."
