@@ -19,6 +19,8 @@ h1{font-size:1.6rem;margin:.2rem 0 .6rem}h2{font-size:1.15rem;margin:1.2rem 0 .5
 .main{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:1rem}
 .main.wide{max-width:none}
 .footer{display:flex;gap:1.5rem;flex-wrap:wrap;padding:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+.banner{background:#ffe9a8;color:#5a4300;padding:.45rem 1rem;font-size:.9rem;text-align:center}
+@media(prefers-color-scheme:dark){.banner{background:#4a3a00;color:#ffe9a8}}
 .dev-badge{background:#ffe9a8;color:#5a4300;padding:.1rem .5rem;border-radius:.3rem;font-weight:600}
 input,select,button,textarea{font:inherit;color:inherit}
 input[type=text],input[type=search],input[type=url],input:not([type]),select,textarea{background:var(--card);border:1px solid var(--line);border-radius:.4rem;padding:.45rem .6rem;min-width:0}

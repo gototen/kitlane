@@ -1,4 +1,5 @@
 import type { Queryable } from "../db/index.js";
+import type { Config } from "../config.js";
 import { KitlaneError, badRequest, forbidden, notFound } from "../errors.js";
 import { newId } from "../ids.js";
 import type { Actor, Entry, EntryKind, EntryMode, EntryWithNames, Lifecycle, User } from "../types.js";
@@ -163,6 +164,24 @@ export async function requireMaintainer(q: Queryable, entry: Entry, user: User):
 export function requireOwner(entry: Entry, user: User): void {
   if (user.is_admin || entry.owner_id === user.id) return;
   throw forbidden("Only this tool's owner can do that");
+}
+
+/**
+ * Publishing policy. By default every authenticated member may publish. An operator running a
+ * public or demonstration installation can restrict publishing (creating entries, uploading
+ * versions, copying, claiming names) to an allowlist with KITLANE_PUBLISHERS; browsing, launching,
+ * and using tools stay open to everyone who can sign in.
+ */
+export function canPublish(config: Config, user: User): boolean {
+  if (config.publishers.size === 0 || user.is_admin) return true;
+  const ids = [user.external_id, user.email ?? ""].map((x) => x.toLowerCase()).filter(Boolean);
+  return ids.some((x) => config.publishers.has(x));
+}
+
+export function requirePublisher(config: Config, user: User): void {
+  if (canPublish(config, user)) return;
+  const contact = config.reportingContact ? ` Contact ${config.reportingContact} to be added.` : "";
+  throw forbidden(`Publishing on this installation is limited to invited accounts.${contact}`);
 }
 
 export function requireAdmin(user: User): void {

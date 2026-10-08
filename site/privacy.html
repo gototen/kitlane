@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Kitlane demo privacy notice</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--muted:#5d6672;--accent:#2457d6}
+@media(prefers-color-scheme:dark){:root{--bg:#101317;--fg:#e6e8eb;--muted:#9aa4b1;--accent:#6b93ff}}
+body{margin:0;font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:46rem;margin:0 auto;padding:3rem 1rem}h1{font-size:1.7rem}h2{font-size:1.15rem;margin:1.6rem 0 .4rem}a{color:var(--accent)}.muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Privacy notice for the Kitlane public demo</h1>
+<p class="muted">Applies to the demonstration installation at kit.kitlane.dev. Last updated: 2026-10-08.</p>
+
+<h2>What the demo is</h2>
+<p>The public demo is a sample installation of Kitlane, an open-source project, provided so people can see how it works. It contains synthetic sample tools and data. It is not a service for real work. Do not enter real, personal, or confidential information.</p>
+
+<h2>Signing in with Google</h2>
+<p>The demo uses Google sign-in so that each visitor has a stable identity. When you sign in, Google shares your account's unique identifier, email address, and display name with the demo. The demo requests no other Google data and cannot read your Gmail, Drive, Calendar, or anything else. If your account belongs to a Google Workspace organization, the organization's domain is recorded as your "team" so the demo can show how cross-team discovery is measured.</p>
+
+<h2>What the demo stores</h2>
+<ul>
+<li>Your Google identifier, email address, display name, and Workspace domain, if any.</li>
+<li>Anything you type into a sample tool that saves data, such as notes or preferences. Personal data is isolated to you and to the tool you typed it into. Shared collections are readable by everyone signed in to the demo.</li>
+<li>Usage events for discovery measurement: which sample tool was open, whether the Explore tools drawer was opened, which recommendation was launched, and when. These use a pseudonymous session key. No text you type and no search terms are recorded in these events.</li>
+<li>Standard web server logs with IP addresses and request paths, kept briefly for security and troubleshooting.</li>
+</ul>
+
+<h2>How long it is kept</h2>
+<p>The demo is reset on a schedule, which deletes all stored data including accounts, saved notes, and usage events. Usage events older than ninety days are deleted automatically even between resets. Server logs are rotated within a few weeks.</p>
+
+<h2>Who can see what</h2>
+<p>Other signed-in visitors can see your display name on anything you publish or edit in shared collections, and the sample tools show each tool's creator. Nobody else can see your personal notes. The person operating the demo can access the database for maintenance. Data is not sold and not shared with third parties beyond the hosting provider and Google sign-in.</p>
+
+<h2>Publishing</h2>
+<p>Publishing tools on the demo is limited to invited accounts. Everyone else can browse, launch, and use the sample tools. If you see something on the demo that should not be there, use the contact below and it will be frozen or removed.</p>
+
+<h2>Your choices</h2>
+<p>You can stop using the demo at any time. To have your data removed before the next scheduled reset, or to ask any question about this notice, contact <a href="mailto:REPLACE-ME@example.com">REPLACE-ME@example.com</a>. You can also revoke the demo's access to your Google account at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</p>
+
+<h2>Running your own</h2>
+<p>Kitlane is designed to be self-hosted by one organization at a time. An installation you run yourself stores its data with you and uses your own sign-in provider; this notice does not apply to it.</p>
+</main>
+</body>
+</html>

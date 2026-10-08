@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Kitlane</title>
+<meta name="description" content="Kitlane is an open-source internal front door for the software people make: memorable names, a discovery rail beside every tool, and copy-and-adapt with any builder.">
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--muted:#5d6672;--card:#fff;--line:#dde1e6;--accent:#2457d6}
+@media(prefers-color-scheme:dark){:root{--bg:#101317;--fg:#e6e8eb;--muted:#9aa4b1;--card:#171b21;--line:#2a3039;--accent:#6b93ff}}
+body{margin:0;font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:46rem;margin:0 auto;padding:3rem 1rem}
+h1{font-size:2rem;margin:.2rem 0}h2{font-size:1.2rem;margin:2rem 0 .5rem}
+a{color:var(--accent)}.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:.7rem;padding:1rem;margin:1rem 0}
+code{font-family:ui-monospace,Menlo,monospace;background:var(--card);border:1px solid var(--line);border-radius:.3rem;padding:0 .3rem}
+.btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;padding:.6rem 1rem;border-radius:.5rem;font-weight:600}
+footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<p class="muted">Open source · Apache-2.0 · early reference implementation</p>
+<h1>Kitlane</h1>
+<p>An internal front door for the software people make. Give an employee-made tool a memorable address like <code>kit/prep</code>, show an <strong>Explore tools</strong> rail beside it so colleagues find what else exists while they work, and let anyone make a copy and adapt it with whatever builder they prefer.</p>
+<p><a class="btn" href="https://kit.kitlane.dev/">Try the public demo</a> &nbsp; <a href="https://github.com/gototen/kitlane">Source on GitHub</a></p>
+<div class="card">
+<strong>About the demo.</strong> Sign in with any Google account to browse, launch, and use the sample tools. Publishing is limited to invited accounts, the sample data is synthetic, and the demo is reset on a schedule. Do not enter real or confidential information. See the <a href="privacy.html">privacy notice</a>.
+</div>
+<h2>What it does</h2>
+<ul>
+<li>Publish a static tool from the command line, or register an existing URL, under a short name.</li>
+<li>Every hosted tool runs on its own origin inside a shell with a persistent discovery rail.</li>
+<li>Tools get identity, durable personal storage, and company-readable shared collections through a small browser SDK.</li>
+<li>Make a copy of any published tool, download its files, adapt them with any agent or builder, and republish with attribution.</li>
+<li>Self-host for one organization with Docker Compose, your own identity provider, and your own data.</li>
+</ul>
+<h2>Run it yourself</h2>
+<p>Each installation serves one organization or trusted team and controls its own membership and data. The repository includes a local demonstration and a documented team deployment.</p>
+<footer>Kitlane is an independent open-source project.</footer>
+</main>
+</body>
+</html>

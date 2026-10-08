@@ -143,3 +143,5 @@ These are ordinary code boundaries, not a plugin system.
 - Sessions expire after `KITLANE_SESSION_TTL_SECONDS` (default 12 hours); expired sessions and stale codes are pruned every 10 minutes while serving.
 - Server subcommands: `kitlane-server serve` (default), `migrate`, `doctor` (configuration summary and fail-fast checks), `seed` (demonstration tools and data), `revoke-updaters [reason]`, `grant-admin <user id | external id | email>`.
 - Health: `GET /healthz`. Certificate check for on-demand TLS: `GET /.well-known/kitlane/host-check?domain=<host>` (host-independent, unauthenticated, answers only whether the domain is this installation's portal or a registered tool host).
+
+- Policy knobs for public installations: `KITLANE_PUBLISHERS` (publishing allowlist), `KITLANE_BANNER` (notice on every page and in the drawer). See `docs/install-public-demo.md`.

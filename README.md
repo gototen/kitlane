@@ -22,6 +22,7 @@ The rail is the primary discovery mechanism. A portal with search and browsing e
 | Discovery measurement with a north-star report | Implemented, tested |
 | Catalog export; operator backup and restore scripts | Implemented; scripts run once against the local stack |
 | `kitlane init` with bounded agent guidance | Implemented, tested |
+| Publishing allowlist and banner for public demonstration installations | Implemented, tested |
 | Docker Compose package with oauth2-proxy, Caddy, Postgres, optional Keycloak | Local profile run and verified end to end on 2026-10-07 (curl and Chrome), including backup and restore; team profile not yet run |
 | Optional AI gateway (`kitlane.ai.chat`) | Deferred; design in [docs/deferred/ai-adapter.md](docs/deferred/ai-adapter.md) |
 
@@ -76,6 +77,7 @@ packages/sdk             Browser SDK served on every tool origin at /._kitlane/s
 packages/cli             The `kitlane` command-line tool
 examples/                Seed tools and synthetic data (prep, briefs-editor, focus, meet, updater)
 deploy/compose           Docker Compose reference installation (local demo and team profiles)
+site/                    Static landing page and demo privacy notice (host separately)
 docs/                    Architecture, installation, security, SDK, CLI, measurement, roadmap
 Dockerfile               Image for the control service
 ```
@@ -85,6 +87,7 @@ Dockerfile               Image for the control service
 - [Architecture](docs/architecture.md)
 - [Install: try locally](docs/install-try-locally.md)
 - [Install: run for a team](docs/install-run-for-a-team.md)
+- [Install: a public demonstration with Google sign-in](docs/install-public-demo.md)
 - [Security baseline](docs/security-baseline.md)
 - [Backup and restore](docs/backup-restore.md)
 - [Hosting constraints for tool authors](docs/hosting-constraints.md)

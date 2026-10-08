@@ -41,6 +41,9 @@ export interface Config {
   ingressSecret: string | null;
   secret: string;
   adminUsers: Set<string>;
+  /** When non-empty, only these users (external id or email) and administrators may publish. */
+  publishers: Set<string>;
+  banner: string | null;
   identityHeaders: { user: string; email: string; name: string; team: string };
   exposeEmail: boolean;
   toolCookieSameSite: "Lax" | "None" | "Strict";
@@ -132,6 +135,8 @@ export function loadConfig(overrides: Partial<Record<string, string>> = {}): Con
     ingressSecret,
     secret,
     adminUsers: new Set(envList("KITLANE_ADMIN_USERS").map((s) => s.toLowerCase())),
+    publishers: new Set(envList("KITLANE_PUBLISHERS").map((s) => s.toLowerCase())),
+    banner: env("KITLANE_BANNER") ?? null,
     identityHeaders: {
       user: env("KITLANE_IDENTITY_HEADER_USER", "x-forwarded-user")!.toLowerCase(),
       email: env("KITLANE_IDENTITY_HEADER_EMAIL", "x-forwarded-email")!.toLowerCase(),

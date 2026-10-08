@@ -55,6 +55,11 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = ({ config, title, user
           ) : null}
         </nav>
       </header>
+      {config.banner ? (
+        <div class="banner" role="note">
+          {config.banner}
+        </div>
+      ) : null}
       <main class={wide ? "main wide" : "main"}>{children}</main>
       <footer class="footer">
         <span>Kitlane reference implementation · Apache-2.0</span>

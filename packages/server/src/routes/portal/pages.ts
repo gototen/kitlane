@@ -65,9 +65,10 @@ export function pagesApp(services: Services) {
     return c.html(searchPage(config, u, { q, tag, creator: creatorId, kind, includeRetired }, results, creator, canClaim));
   });
 
-  app.get("/.new", (c) => c.html(newEntryPage(config, user(c), { name: c.req.query("name") ?? "", error: c.req.query("error") ?? undefined })));
+  app.get("/.new", (c) => c.html(newEntryPage(config, user(c), { name: c.req.query("name") ?? "", error: c.req.query("error") ?? undefined, canPublish: entries.canPublish(config, user(c)) })));
   app.post("/.new", async (c) => {
     const u = user(c);
+    entries.requirePublisher(config, u);
     const b = await c.req.parseBody();
     const mode = str(b.mode) === "hosted" ? "hosted" : "external";
     try {
@@ -143,7 +144,7 @@ export function pagesApp(services: Services) {
       entry.replacement_entry_id ? entries.getEntry(db, entry.replacement_entry_id) : Promise.resolve(null),
     ]);
     return c.html(
-      toolDetailPage(config, { entry, user: u, canMaintain, isOwner, maintainers, versions: vers, active, history, lineage: lin, bindings, collections, audit, replacement, flash: c.req.query("flash"), error: c.req.query("error") }),
+      toolDetailPage(config, { entry, user: u, canMaintain, isOwner, canPublish: entries.canPublish(config, u), maintainers, versions: vers, active, history, lineage: lin, bindings, collections, audit, replacement, flash: c.req.query("flash"), error: c.req.query("error") }),
     );
   });
 
@@ -160,11 +161,13 @@ export function pagesApp(services: Services) {
 
   app.get("/.tool/:id/copy", async (c) => {
     const { u, entry } = await loadTool(c);
+    entries.requirePublisher(config, u);
     if (entry.mode !== "hosted") throw badRequest("Only hosted tools can be copied");
     return c.html(copyPage(config, u, entry));
   });
   app.post("/.tool/:id/copy", async (c) => {
     const { u, entry } = await loadTool(c);
+    entries.requirePublisher(config, u);
     const b = await c.req.parseBody();
     const active = await versions.getActiveVersion(db, entry.id);
     if (!active) throw badRequest("This tool has no published version to copy");

@@ -49,7 +49,7 @@ export function apiApp(services: Services) {
     const u = user(c);
     const entry = await entries.requireEntry(db, c.req.param("id"));
     const [recs, maintainers] = await Promise.all([recommendFor(db, entry, 5), entries.listMaintainers(db, entry.id)]);
-    const canCopy = entry.mode === "hosted" && !entry.frozen && Boolean(await versions.getActiveVersion(db, entry.id));
+    const canCopy = entry.mode === "hosted" && !entry.frozen && entries.canPublish(config, u) && Boolean(await versions.getActiveVersion(db, entry.id));
     c.header("Content-Type", "text/html; charset=utf-8");
     return c.body(drawerFragment(config, entry, maintainers.map((m) => m.display_name), recs, canCopy).toString());
   });
@@ -105,6 +105,7 @@ export function apiApp(services: Services) {
 
   cli.post("/tools", async (c) => {
     const u = user(c);
+    entries.requirePublisher(config, u);
     const b = await c.req.json();
     const mode = b.mode === "external" ? "external" : "hosted";
     const entry = await db.transaction((tx) =>
@@ -158,6 +159,7 @@ export function apiApp(services: Services) {
 
   // Upload: body is a tar (optionally gzip) stream.
   cli.post("/tools/:id/versions", async (c) => {
+    entries.requirePublisher(config, user(c));
     const e = await resolveMaintained(c);
     if (!c.req.raw.body) throw badRequest("Missing upload body");
     const ct = (c.req.header("content-type") ?? "").toLowerCase();
@@ -214,6 +216,7 @@ export function apiApp(services: Services) {
 
   cli.post("/tools/:id/copy", async (c) => {
     const u = user(c);
+    entries.requirePublisher(config, u);
     const e = await resolveTool(c);
     const b = await c.req.json();
     const active = await versions.getActiveVersion(db, e.id);
@@ -223,6 +226,7 @@ export function apiApp(services: Services) {
   });
 
   cli.post("/tools/:id/names", async (c) => {
+    entries.requirePublisher(config, user(c));
     const e = await resolveMaintained(c);
     const b = await c.req.json();
     const name = await db.transaction((tx) => names.claimName(tx, userActor(user(c).id), String(b.name ?? ""), e.id));

@@ -86,3 +86,7 @@ Audited: entry creation, metadata changes, lifecycle, feature flag, freeze and u
 ## Reporting and response
 
 Operators set `KITLANE_REPORTING_CONTACT` (shown in the portal footer). Administrators can freeze a tool or a collection immediately from its detail page, remove a version's content while preserving the audit record, and recover ownership. These controls exist from the first deployment, not as a later retrofit.
+
+## Public installations and the publishing allowlist
+
+By default every authenticated member may publish, because inside one organization authors are identified and accountable. On an installation that admits strangers (a public demo with Google sign-in, for example) that accountability is gone, so `KITLANE_PUBLISHERS` limits creating entries, uploading versions, copying, and claiming names to listed accounts and administrators. The check runs server-side on every publishing route, including for co-maintainers who are not listed. Browsing, launching, the drawer, personal storage, and shared-collection reads stay open to everyone who can sign in. `KITLANE_BANNER` labels the installation, and `scripts/reset-demo.sh` deletes everything on a schedule. See `docs/install-public-demo.md`.

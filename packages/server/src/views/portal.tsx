@@ -175,7 +175,25 @@ export function searchPage(config: Config, user: User, params: { q: string; tag?
   );
 }
 
-export function newEntryPage(config: Config, user: User, prefill: { name?: string; error?: string }) {
+export function newEntryPage(config: Config, user: User, prefill: { name?: string; error?: string; canPublish?: boolean }) {
+  if (prefill.canPublish === false) {
+    return (
+      <Layout config={config} title="Publish a tool or link" user={user}>
+        <section class="card narrow">
+          <h1>Publishing is limited on this installation</h1>
+          <p>You can open, search, and use every tool here, but publishing, copying, and claiming names are limited to invited accounts.</p>
+          {config.reportingContact ? (
+            <p>
+              To get publishing access, contact <a href={config.reportingContact.includes("@") ? `mailto:${config.reportingContact}` : config.reportingContact}>{config.reportingContact}</a>.
+            </p>
+          ) : null}
+          <p>
+            To run Kitlane for your own team, where everyone can publish, see the installation guide in the project repository.
+          </p>
+        </section>
+      </Layout>
+    );
+  }
   return (
     <Layout config={config} title="Publish a tool or link" user={user}>
       <section class="card">
@@ -356,6 +374,7 @@ export interface ToolDetailData {
   user: User;
   canMaintain: boolean;
   isOwner: boolean;
+  canPublish: boolean;
   maintainers: (User & { added_at: Date })[];
   versions: (Version & { created_by_name: string | null })[];
   active: Version | null;
@@ -414,7 +433,7 @@ export function toolDetailPage(config: Config, d: ToolDetailData) {
               Open directly
             </a>
           ) : null}
-          {entry.mode === "hosted" && d.active && !entry.frozen ? (
+          {entry.mode === "hosted" && d.active && !entry.frozen && d.canPublish ? (
             <a class="button" href={`/.tool/${entry.id}/copy`}>
               Make a copy
             </a>
@@ -1289,6 +1308,7 @@ export function drawerFragment(config: Config, current: EntryWithNames, maintain
           <p class="muted">No other tools yet.</p>
         )}
         <p class="muted small">Cards are ranked by shared purpose tags, creator, and recency. Popularity is not approval.</p>
+        {config.banner ? <p class="muted small">{config.banner}</p> : null}
       </section>
       <section class="drawer-footer">
         <a href={`${portalOrigin(config)}/.search`} target="_top">
