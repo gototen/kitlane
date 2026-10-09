@@ -1,0 +1,290 @@
+[
+  {
+    "id": "acme-anvils",
+    "name": "Acme Anvils",
+    "sector": "Industrial manufacturing",
+    "hq": "Toledo, Ohio",
+    "founded": 1948,
+    "employees": 3200,
+    "summary": "Acme Anvils makes forged tooling and heavy hardware for machine shops and construction. The company has spent the last two years modernizing its foundries and expanding into made-to-order fixtures.",
+    "recentNews": [
+      "Opened a second automated forging line in Toledo.",
+      "Announced a buyback program for surplus tooling.",
+      "Hired a new chief operating officer from the rail industry."
+    ],
+    "talkingPoints": [
+      "Ask how the new forging line changed lead times.",
+      "Explore interest in predictive maintenance for legacy presses.",
+      "Confirm who owns procurement for made-to-order fixtures."
+    ],
+    "risks": [
+      "Steel price volatility squeezes margins on fixed-price contracts.",
+      "Heavy dependence on three regional distributors."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "globex-logistics",
+    "name": "Globex Logistics",
+    "sector": "Freight and logistics",
+    "hq": "Rotterdam, Netherlands",
+    "founded": 1992,
+    "employees": 8700,
+    "summary": "Globex Logistics coordinates container freight, warehousing, and last-mile delivery across Europe. It is consolidating a patchwork of acquired warehouse systems into one platform.",
+    "recentNews": [
+      "Completed the acquisition of a cold-chain carrier in Poland.",
+      "Launched a shipment-visibility portal for mid-sized shippers.",
+      "Reported a quarter of flat volumes and improved margins."
+    ],
+    "talkingPoints": [
+      "Ask which warehouse systems are still being migrated.",
+      "Discuss data-sharing expectations with shipper customers.",
+      "Probe appetite for pilots in the new cold-chain unit."
+    ],
+    "risks": [
+      "Integration fatigue after four acquisitions in three years.",
+      "Exposure to port congestion and fuel surcharges."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "initrode-systems",
+    "name": "Initrode Systems",
+    "sector": "Enterprise software",
+    "hq": "Austin, Texas",
+    "founded": 2004,
+    "employees": 1450,
+    "summary": "Initrode Systems sells billing and subscription management software to utilities and telecom providers. Its roadmap centers on moving long-standing on-premise customers to a hosted edition.",
+    "recentNews": [
+      "Released a hosted edition with usage-based pricing.",
+      "Signed a multi-year renewal with a regional water utility.",
+      "Reorganized sales around industry verticals."
+    ],
+    "talkingPoints": [
+      "Ask how many customers remain on-premise and why.",
+      "Understand the vertical sales structure and who covers your account.",
+      "Discuss integration points for the hosted edition."
+    ],
+    "risks": [
+      "Migration delays could stall recurring revenue growth.",
+      "Larger platform vendors are bundling billing features."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "vandelay-imports",
+    "name": "Vandelay Imports",
+    "sector": "Wholesale distribution",
+    "hq": "Newark, New Jersey",
+    "founded": 1987,
+    "employees": 620,
+    "summary": "Vandelay Imports distributes latex goods, packaging, and industrial consumables to manufacturers in the northeastern United States. The company is family-owned and recently brought in outside leadership.",
+    "recentNews": [
+      "Appointed its first non-family chief executive.",
+      "Added a packaging sustainability line to its catalog.",
+      "Opened a distribution center near Allentown."
+    ],
+    "talkingPoints": [
+      "Ask about priorities under the new chief executive.",
+      "Explore demand for sustainable packaging among their customers.",
+      "Clarify decision-making between family owners and management."
+    ],
+    "risks": [
+      "Leadership transition may slow purchasing decisions.",
+      "Thin margins on commodity consumables."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "hooli-cloud",
+    "name": "Hooli Cloud",
+    "sector": "Cloud infrastructure",
+    "hq": "Palo Alto, California",
+    "founded": 2011,
+    "employees": 5100,
+    "summary": "Hooli Cloud operates compute and storage services aimed at media and gaming companies. It differentiates on edge locations and a developer-friendly billing model.",
+    "recentNews": [
+      "Opened edge regions in Sao Paulo and Jakarta.",
+      "Introduced committed-use discounts for GPU instances.",
+      "Published a transparency report on service incidents."
+    ],
+    "talkingPoints": [
+      "Ask how edge expansion is changing their customer mix.",
+      "Discuss GPU capacity constraints and allocation policy.",
+      "Explore partnership interest around observability tooling."
+    ],
+    "risks": [
+      "Capital-intensive expansion against larger hyperscalers.",
+      "Two widely reported outages in the past year."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "wonka-confections",
+    "name": "Wonka Confections",
+    "sector": "Food and beverage",
+    "hq": "Birmingham, United Kingdom",
+    "founded": 1961,
+    "employees": 2300,
+    "summary": "Wonka Confections produces chocolate and novelty sweets sold through grocers and specialty retailers in Europe. It has been reformulating products to meet new sugar guidelines.",
+    "recentNews": [
+      "Launched a reduced-sugar line across three core products.",
+      "Signed a cocoa sourcing agreement with a farmer cooperative.",
+      "Expanded direct-to-consumer gifting ahead of the holiday season."
+    ],
+    "talkingPoints": [
+      "Ask how the reduced-sugar line is performing with retailers.",
+      "Discuss traceability requirements from the sourcing agreement.",
+      "Explore seasonal demand planning challenges."
+    ],
+    "risks": [
+      "Cocoa price spikes affect cost of goods.",
+      "Regulatory changes on marketing to children."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "stark-robotics",
+    "name": "Stark Robotics",
+    "sector": "Industrial automation",
+    "hq": "Pittsburgh, Pennsylvania",
+    "founded": 2015,
+    "employees": 780,
+    "summary": "Stark Robotics builds collaborative robot arms and vision systems for small manufacturers. Its growth strategy relies on channel partners and a subscription for software updates.",
+    "recentNews": [
+      "Closed a growth financing round led by an industrial fund.",
+      "Released a vision module for bin picking.",
+      "Signed its fiftieth channel partner in North America."
+    ],
+    "talkingPoints": [
+      "Ask how channel partners handle installation and support.",
+      "Understand adoption of the software subscription.",
+      "Discuss safety certification timelines for new modules."
+    ],
+    "risks": [
+      "Dependence on a single camera supplier.",
+      "Small manufacturers delay capital spending in downturns."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "umbrella-pharma",
+    "name": "Umbrella Pharma",
+    "sector": "Pharmaceuticals",
+    "hq": "Basel, Switzerland",
+    "founded": 1979,
+    "employees": 12400,
+    "summary": "Umbrella Pharma develops and manufactures generic and specialty medicines for hospital markets. The company is investing in sterile manufacturing capacity and digital quality systems.",
+    "recentNews": [
+      "Broke ground on a sterile fill-finish facility in Ireland.",
+      "Received approval for a generic oncology injectable.",
+      "Announced a program to digitize batch records."
+    ],
+    "talkingPoints": [
+      "Ask about validation requirements for new quality systems.",
+      "Discuss the timeline for the Irish facility.",
+      "Explore data integrity expectations for vendors."
+    ],
+    "risks": [
+      "Pricing pressure in hospital generics.",
+      "Regulatory inspections can delay facility start-up."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "soylent-fields",
+    "name": "Soylent Fields",
+    "sector": "Agriculture technology",
+    "hq": "Des Moines, Iowa",
+    "founded": 2017,
+    "employees": 310,
+    "summary": "Soylent Fields sells soil sensors and an agronomy platform to row-crop farms and cooperatives. It recently added a carbon-credit measurement service.",
+    "recentNews": [
+      "Partnered with a grain cooperative covering two million acres.",
+      "Launched carbon measurement and reporting for growers.",
+      "Added satellite imagery to its agronomy platform."
+    ],
+    "talkingPoints": [
+      "Ask how the cooperative partnership changes their sales motion.",
+      "Discuss verification standards for carbon measurement.",
+      "Explore seasonality in platform usage."
+    ],
+    "risks": [
+      "Farm income volatility affects subscription renewals.",
+      "Uncertain carbon-credit market rules."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "cyberdyne-analytics",
+    "name": "Cyberdyne Analytics",
+    "sector": "Data and analytics",
+    "hq": "Seattle, Washington",
+    "founded": 2013,
+    "employees": 940,
+    "summary": "Cyberdyne Analytics provides forecasting and anomaly-detection software for retail and manufacturing operations. The company is repositioning from bespoke projects toward packaged products.",
+    "recentNews": [
+      "Released a packaged demand-forecasting product for retailers.",
+      "Reduced its professional services headcount.",
+      "Opened a development office in Toronto."
+    ],
+    "talkingPoints": [
+      "Ask how the shift to packaged products is going with existing customers.",
+      "Understand their data residency commitments.",
+      "Discuss what integrations retailers ask for most."
+    ],
+    "risks": [
+      "Revenue dip during the services-to-product transition.",
+      "Crowded market for forecasting tools."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "pied-piper-media",
+    "name": "Pied Piper Media",
+    "sector": "Digital media",
+    "hq": "Dublin, Ireland",
+    "founded": 2009,
+    "employees": 560,
+    "summary": "Pied Piper Media runs a network of niche publications and a podcast studio. It monetizes through memberships, sponsorships, and licensing its audio compression tools.",
+    "recentNews": [
+      "Crossed one hundred thousand paying members.",
+      "Licensed its audio tooling to two broadcasters.",
+      "Launched a members-only events series."
+    ],
+    "talkingPoints": [
+      "Ask what drove the membership milestone.",
+      "Discuss the licensing business as a separate growth line.",
+      "Explore measurement needs for sponsorships."
+    ],
+    "risks": [
+      "Advertising demand is cyclical.",
+      "Platform policy changes affect audience reach."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "oceanic-airlines",
+    "name": "Oceanic Airlines",
+    "sector": "Aviation",
+    "hq": "Sydney, Australia",
+    "founded": 1983,
+    "employees": 9800,
+    "summary": "Oceanic Airlines operates regional and long-haul routes across the Pacific. It is renewing its fleet and overhauling its loyalty program.",
+    "recentNews": [
+      "Took delivery of the first of twelve new long-haul aircraft.",
+      "Relaunched its loyalty program with tiered benefits.",
+      "Added a seasonal route between Sydney and Honolulu."
+    ],
+    "talkingPoints": [
+      "Ask how fleet renewal affects maintenance planning.",
+      "Discuss data needs for the relaunched loyalty program.",
+      "Explore crew scheduling pain points."
+    ],
+    "risks": [
+      "Fuel cost exposure on long-haul routes.",
+      "Delivery delays from aircraft manufacturers."
+    ],
+    "updatedAt": "2026-10-01T00:00:00Z"
+  }
+]
