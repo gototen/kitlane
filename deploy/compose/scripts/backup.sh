@@ -16,7 +16,11 @@ mkdir -p "$OUT"
 echo "dumping database..."
 docker compose exec -T postgres pg_dump -U kitlane -d kitlane --no-owner --format=custom > "$OUT/kitlane.pgdump"
 echo "archiving deployed files and server secret..."
-docker run --rm -v "$(docker compose config --format json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const c=JSON.parse(s);process.stdout.write(c.volumes["kitlane-data"].name)})')":/data:ro -v "$(cd "$OUT" && pwd)":/out alpine sh -c 'cd /data && tar czf /out/kitlane-data.tar.gz .'
+# Resolve the data volume by its Compose labels (no extra tooling needed on the host).
+PROJECT="${COMPOSE_PROJECT_NAME:-$(basename "$PWD" | tr 'A-Z' 'a-z')}"
+VOL="$(docker volume ls -q --filter "label=com.docker.compose.project=$PROJECT" --filter "label=com.docker.compose.volume=kitlane-data" | head -1)"
+[ -n "$VOL" ] || { echo "could not find the kitlane-data volume for project $PROJECT"; exit 1; }
+docker run --rm -v "$VOL":/data:ro -v "$(cd "$OUT" && pwd)":/out alpine sh -c 'cd /data && tar czf /out/kitlane-data.tar.gz .'
 cp .env "$OUT/env.backup"
 chmod 600 "$OUT"/*
 echo "backup written to $OUT"
