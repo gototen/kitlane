@@ -47,7 +47,8 @@ export async function upsertUserFromIdentity(q: Queryable, config: Config, claim
   const admin = isConfiguredAdmin(config, claims);
   if (existing) {
     const r = await q.query<User>(
-      `UPDATE users SET display_name = $2, email = COALESCE($3, email), team = COALESCE($4, team),
+      `UPDATE users SET display_name = $2, email = COALESCE($3, email),
+         team = CASE WHEN team_locked THEN team ELSE COALESCE($4, team) END,
          is_admin = (is_admin OR $5), last_seen_at = now()
        WHERE id = $1 RETURNING *`,
       [existing.id, displayName, claims.email ?? null, claims.team ?? null, admin],
@@ -60,7 +61,9 @@ export async function upsertUserFromIdentity(q: Queryable, config: Config, claim
     const seeded = await q.query<User>(`SELECT * FROM users WHERE lower(email) = lower($1) AND is_dev_user LIMIT 1`, [claims.email]);
     if (seeded.rows[0]) {
       const r = await q.query<User>(
-        `UPDATE users SET external_id = $2, display_name = $3, team = COALESCE($4, team), is_admin = (is_admin OR $5), is_dev_user = FALSE, last_seen_at = now()
+        `UPDATE users SET external_id = $2, display_name = $3,
+           team = CASE WHEN team_locked THEN team ELSE COALESCE($4, team) END,
+           is_admin = (is_admin OR $5), is_dev_user = FALSE, last_seen_at = now()
          WHERE id = $1 RETURNING *`,
         [seeded.rows[0].id, claims.externalId, displayName, claims.team ?? null, admin],
       );
@@ -73,6 +76,20 @@ export async function upsertUserFromIdentity(q: Queryable, config: Config, claim
     [newId(10), claims.externalId, displayName, claims.email ?? null, claims.team ?? null, admin, opts.devUser ?? false],
   );
   return r.rows[0];
+}
+
+/**
+ * Administrator-assigned team. Used when the identity provider supplies no team (for example a
+ * usability study with personal accounts). A locked team is kept on later sign-ins; clearing it
+ * unlocks the field so the provider's claim applies again. Reports must label assigned teams.
+ */
+export async function setUserTeam(q: Queryable, userId: string, team: string | null): Promise<void> {
+  const value = team ? team.trim().toLowerCase().slice(0, 80) : null;
+  await q.query(`UPDATE users SET team = $2, team_locked = $3 WHERE id = $1`, [userId, value, value !== null]);
+}
+
+export async function listRecentUsers(q: Queryable, limit = 50): Promise<User[]> {
+  return (await q.query<User>(`SELECT * FROM users ORDER BY last_seen_at DESC LIMIT $1`, [limit])).rows;
 }
 
 export async function setAdmin(q: Queryable, userId: string, isAdmin: boolean): Promise<void> {

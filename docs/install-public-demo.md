@@ -92,3 +92,10 @@ Say so in the banner and in the privacy notice. Visitors' Google identities, per
 ## What this is not
 
 A public demo is not a managed service for other organizations. Shared collections are readable by every signed-in visitor by design, so one demo cannot host two unrelated groups' data. The supported model for other organizations is one installation each, run by them, with their own sign-in and data.
+
+## Running a study on the demo
+
+- Pause the nightly reset for the whole study window (move or comment the cron entry), and change `KITLANE_BANNER` to say the data is reset after the study. The seven-day return measure cannot survive a reset.
+- Assign study teams to participants from `/.admin` before the first session, so discovery snapshots carry them.
+- Give participants a tool with a reason to return: replace the synthetic briefs with content your participants actually consult, and republish `prep` with it.
+- Report the result as a usability study with assigned teams, per spec section 11.1.

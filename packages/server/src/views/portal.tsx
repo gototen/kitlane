@@ -1088,7 +1088,7 @@ export function nameHistoryPage(config: Config, user: User, name: string, curren
   );
 }
 
-export function adminPage(config: Config, user: User, frozenEntries: EntryWithNames[], reserved: NameRow[], recentAudit: AuditEvent[], flash?: string | null, error?: string | null) {
+export function adminPage(config: Config, user: User, frozenEntries: EntryWithNames[], reserved: NameRow[], recentAudit: AuditEvent[], recentUsers: User[], flash?: string | null, error?: string | null) {
   return (
     <Layout config={config} title="Administration" user={user}>
       <section>
@@ -1158,6 +1158,39 @@ export function adminPage(config: Config, user: User, frozenEntries: EntryWithNa
               </select>
               <button type="submit">Apply</button>
             </form>
+            <h3>Assign a team</h3>
+            <p class="muted small">For studies where the identity provider supplies no team. An assigned team is kept on later sign-ins until cleared, and reports must say teams were assigned.</p>
+            <form method="post" action="/.admin/users/team" class="row">
+              <input name="user" placeholder="user ID or email" required />
+              <input name="team" placeholder="team (blank to clear)" maxlength={80} />
+              <button type="submit">Set team</button>
+            </form>
+            {recentUsers.length ? (
+              <table class="table small">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Team</th>
+                    <th>Last seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentUsers.map((ru) => (
+                    <tr>
+                      <td>
+                        {ru.display_name} {ru.is_admin ? <span class="badge">admin</span> : null} {ru.is_dev_user ? <span class="badge">synthetic</span> : null}
+                      </td>
+                      <td>{ru.email ?? ""}</td>
+                      <td>
+                        {ru.team ?? <span class="muted">unknown</span>} {ru.team_locked ? <span class="badge" title="Assigned by an administrator">assigned</span> : null}
+                      </td>
+                      <td>{formatDate(ru.last_seen_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : null}
           </section>
         </div>
         <section class="card">
@@ -1260,6 +1293,7 @@ export function measurementPage(config: Config, user: User, report: MeasurementR
             ))}
           </tbody>
         </table>
+        {report.assignedTeams ? <p class="notice">{report.assignedTeams} user(s) have administrator-assigned teams. Treat team-based numbers as a usability study result, not organizational adoption.</p> : null}
         <h2>Interpretation limits</h2>
         <ul>
           {report.notes.map((n) => (

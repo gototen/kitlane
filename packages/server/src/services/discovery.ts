@@ -56,6 +56,7 @@ export interface MeasurementReport {
     unknownTeamReturning: number;
   };
   bySourceTool: { source_entry_id: string; title: string; launches: number }[];
+  assignedTeams: number;
   notes: string[];
 }
 
@@ -113,8 +114,10 @@ export async function measurementReport(q: Queryable, sinceDays = 30): Promise<M
     [since],
   );
 
+  const assigned = await q.query<{ n: number }>(`SELECT count(*)::int AS n FROM users WHERE team_locked`);
   return {
     since: since.toISOString(),
+    assignedTeams: assigned.rows[0].n,
     stages: { opportunity: count("rail_rendered"), engagement: count("drawer_opened"), discovery: count("recommendation_launched"), accessEvents: count("tool_accessed") },
     cohort: { eligibleUsers: cohort.rows[0].eligible, usersWithRailOpportunity: cohort.rows[0].with_rail },
     railOriginated: {

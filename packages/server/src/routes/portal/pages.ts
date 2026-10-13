@@ -11,7 +11,7 @@ import * as tokens from "../../services/tokens.js";
 import { listAuditForCollection, listAuditForEntry, listRecentAudit } from "../../services/audit.js";
 import { allTags, recentEntries, searchEntries } from "../../services/search.js";
 import { measurementReport } from "../../services/discovery.js";
-import { findUserByHandle, getUser, setAdmin } from "../../services/users.js";
+import { findUserByHandle, getUser, listRecentUsers, setAdmin, setUserTeam } from "../../services/users.js";
 import { isValidName } from "../../names.js";
 import {
   adminPage,
@@ -414,7 +414,18 @@ export function pagesApp(services: Services) {
     const u = user(c);
     entries.requireAdmin(u);
     const frozen = (await entries.listEntries(db, { includeRetired: true, limit: 500 })).filter((e) => e.frozen);
-    return c.html(adminPage(config, u, frozen, await names.listReservedNames(db), await listRecentAudit(db, 100), c.req.query("flash"), c.req.query("error")));
+    return c.html(adminPage(config, u, frozen, await names.listReservedNames(db), await listRecentAudit(db, 100), await listRecentUsers(db, 50), c.req.query("flash"), c.req.query("error")));
+  });
+  app.post("/.admin/users/team", async (c) => {
+    const u = user(c);
+    entries.requireAdmin(u);
+    const b = await c.req.parseBody();
+    const target = await findUserByHandle(db, str(b.user));
+    if (!target) return c.redirect(flashUrl("/.admin", undefined, "User not found"), 303);
+    const team = str(b.team).trim() || null;
+    await setUserTeam(db, target.id, team);
+    await db.query(`INSERT INTO audit_events (actor_type, actor_id, action, target_type, target_id, details) VALUES ('user', $1, 'user.team_assigned', 'user', $2, $3::jsonb)`, [u.id, target.id, JSON.stringify({ team, previous: target.team })]);
+    return c.redirect(flashUrl("/.admin", team ? `${target.display_name} is now in team "${team}" (assigned; label it as such in reports).` : `${target.display_name}'s assigned team was cleared.`), 303);
   });
   app.get("/.admin/measurement", async (c) => {
     const u = user(c);

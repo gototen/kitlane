@@ -56,3 +56,7 @@ Summarised from specification section 11; none of it has been run for this relea
 ## Running the report
 
 Sign in as an administrator and open `/.admin/measurement`. Programmatically, `measurementReport(db, days)` in `packages/server/src/services/discovery.ts` returns the same structure as JSON.
+
+## Assigned teams for studies
+
+When participants sign in with accounts that carry no team (personal Google accounts, for example), an administrator can assign a team label to a user on the `/.admin` page. The label is kept on later sign-ins until cleared, and the measurement report states how many users have assigned teams. Results computed from assigned teams are a usability study result: report them as "cross-team" only with that label attached, never as organizational adoption. Snapshots taken at discovery time use whatever team the user had then, so assign teams before the study sessions start.

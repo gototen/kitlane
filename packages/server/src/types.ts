@@ -6,6 +6,7 @@ export interface User {
   team: string | null;
   is_admin: boolean;
   is_dev_user: boolean;
+  team_locked: boolean;
   created_at: Date;
   last_seen_at: Date;
 }

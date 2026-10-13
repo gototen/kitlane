@@ -240,4 +240,10 @@ CREATE TABLE sessions (
 CREATE INDEX sessions_expires_idx ON sessions(expires_at);
 `,
   },
+  {
+    name: "002_team_lock",
+    sql: `
+ALTER TABLE users ADD COLUMN team_locked BOOLEAN NOT NULL DEFAULT FALSE;
+`,
+  },
 ];

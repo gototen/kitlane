@@ -28,3 +28,37 @@ describe("identity adoption", () => {
     expect(second.id).not.toBe(real.id);
   });
 });
+
+describe("administrator-assigned teams", () => {
+  it("an assigned team is kept across sign-ins until cleared", async () => {
+    const { setUserTeam } = await import("./users.js");
+    const u = await upsertUserFromIdentity(h.db, h.config, { externalId: "oidc-sub-carol", displayName: "carol", email: "carol@example.test", team: null });
+    expect(u.team).toBeNull();
+    await setUserTeam(h.db, u.id, " Research ");
+    const again = await upsertUserFromIdentity(h.db, h.config, { externalId: "oidc-sub-carol", displayName: "carol", email: "carol@example.test", team: "example.test" });
+    expect(again.team).toBe("research");
+    expect(again.team_locked).toBe(true);
+    await setUserTeam(h.db, u.id, null);
+    const unlocked = await upsertUserFromIdentity(h.db, h.config, { externalId: "oidc-sub-carol", displayName: "carol", email: "carol@example.test", team: "example.test" });
+    expect(unlocked.team).toBe("example.test");
+    expect(unlocked.team_locked).toBe(false);
+  });
+  it("only administrators can assign teams, and the assignment is audited", async () => {
+    const { PORTAL } = await import("../test/harness.js");
+    const admin = await h.user("root2", { admin: true });
+    const plain = await h.user("plain");
+    const target = await h.user("target");
+    const body = `user=${encodeURIComponent(target.email!)}&team=finance`;
+    const denied = await h.req(`${PORTAL}/.admin/users/team`, { method: "POST", cookie: await h.portalCookie(plain), headers: { "content-type": "application/x-www-form-urlencoded", origin: PORTAL }, body, redirect: "manual" });
+    expect(denied.status).toBe(403);
+    const ok = await h.req(`${PORTAL}/.admin/users/team`, { method: "POST", cookie: await h.portalCookie(admin), headers: { "content-type": "application/x-www-form-urlencoded", origin: PORTAL }, body, redirect: "manual" });
+    expect(ok.status).toBe(303);
+    const row = await h.db.query<{ team: string; team_locked: boolean }>(`SELECT team, team_locked FROM users WHERE id = $1`, [target.id]);
+    expect(row.rows[0]).toEqual({ team: "finance", team_locked: true });
+    const audit = await h.db.query(`SELECT 1 FROM audit_events WHERE action = 'user.team_assigned' AND target_id = $1`, [target.id]);
+    expect(audit.rows).toHaveLength(1);
+    const page = await (await h.req(`${PORTAL}/.admin`, { cookie: await h.portalCookie(admin) })).text();
+    expect(page).toContain("Assign a team");
+    expect(page).toContain("assigned");
+  });
+});
