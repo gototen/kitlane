@@ -16,3 +16,5 @@ coverage/
 # Compose working files: generated secrets, local CA, operator backups
 deploy/compose/backups/
 deploy/compose/caddy-local-root.crt
+# Installation-specific extra Caddy sites (keep the .example in git)
+deploy/compose/caddy/sites/*.caddy

@@ -1,0 +1,16 @@
+# Static landing page and privacy notice (repository site/ folder, mounted at /srv/site).
+example.com, www.example.com {
+	encode gzip
+	root * /srv/site
+	file_server
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# Secondary domains redirect to the primary one.
+example.app, www.example.app {
+	redir https://example.com{uri} permanent
+}

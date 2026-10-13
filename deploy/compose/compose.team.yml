@@ -5,5 +5,7 @@ services:
   caddy:
     volumes:
       - ./caddy/Caddyfile.team:/etc/caddy/Caddyfile:ro
+      - ./caddy/sites:/etc/caddy/sites:ro
+      - ../../site:/srv/site:ro
       - caddy-data:/data
       - caddy-config:/config

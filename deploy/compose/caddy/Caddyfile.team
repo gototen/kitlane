@@ -34,3 +34,6 @@ https:// {
 	}
 	respond "Unknown host" 404
 }
+
+# Optional extra sites (landing page, redirects): see caddy/sites/README.md
+import /etc/caddy/sites/*.caddy
