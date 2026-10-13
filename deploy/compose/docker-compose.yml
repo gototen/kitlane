@@ -65,6 +65,8 @@ services:
       OAUTH2_PROXY_REDIRECT_URL: https://${KITLANE_DOMAIN}/oauth2/callback
       OAUTH2_PROXY_EMAIL_DOMAINS: ${OIDC_EMAIL_DOMAINS:-*}
       OAUTH2_PROXY_SCOPE: ${OIDC_SCOPE:-openid email profile}
+      # 'auto' asks for consent only the first time; the default 'force' makes Google re-ask on every sign-in.
+      OAUTH2_PROXY_APPROVAL_PROMPT: ${OIDC_APPROVAL_PROMPT:-auto}
       OAUTH2_PROXY_USER_ID_CLAIM: ${OIDC_USER_ID_CLAIM:-email}
       OAUTH2_PROXY_OIDC_EMAIL_CLAIM: ${OIDC_EMAIL_CLAIM:-email}
       OAUTH2_PROXY_OIDC_GROUPS_CLAIM: ${OIDC_TEAM_CLAIM:-team}

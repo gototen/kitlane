@@ -23,7 +23,7 @@ The rail is the primary discovery mechanism. A portal with search and browsing e
 | Catalog export; operator backup and restore scripts | Implemented; scripts run once against the local stack |
 | `kitlane init` with bounded agent guidance | Implemented, tested |
 | Publishing allowlist and banner for public demonstration installations | Implemented, tested |
-| Docker Compose package with oauth2-proxy, Caddy, Postgres, optional Keycloak | Local profile run and verified end to end on 2026-10-07 (curl and Chrome), including backup and restore; team profile not yet run |
+| Docker Compose package with oauth2-proxy, Caddy, Postgres, optional Keycloak | Local profile verified 2026-10-07 (curl and Chrome) including backup and restore; team profile deployed and verified on a public server with Google sign-in 2026-10-13 |
 | Optional AI gateway (`kitlane.ai.chat`) | Deferred; design in [docs/deferred/ai-adapter.md](docs/deferred/ai-adapter.md) |
 
 ## Quick start

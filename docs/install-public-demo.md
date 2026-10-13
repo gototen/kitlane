@@ -2,6 +2,8 @@
 
 This guide sets up an installation that anyone with a Google account can sign in to, browse, and use, while publishing stays limited to accounts you invite. It builds on [Install: run for a team](install-run-for-a-team.md) and adds the demo-specific policy. Read [Security baseline](security-baseline.md) first: hosted tools are JavaScript that runs in visitors' browsers, and the publishing allowlist is what keeps strangers from running code on your visitors.
 
+**Status.** This guide was followed on 2026-10-13 to deploy the author's public demonstration (Hetzner CX23, Nuremberg, Google sign-in). Everything below was executed; the two defects it surfaced (a gitignored seed file and the consent prompt setting) are fixed in the repository.
+
 ## What you get
 
 - `https://kit.<your-domain>`: the portal, Google sign-in for any account.

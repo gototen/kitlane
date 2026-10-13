@@ -39,9 +39,11 @@ Build started 2026-10-06. Release target 2026-10-24. The specification's week-1 
 
 - 2026-10-07: browser walk-through of the Compose path in Chrome with Caddy's local CA trusted: Keycloak sign-in as `bob`, the portal over HTTPS, the prep shell with one automatic tool-origin sign-in round trip, the hosted prep document on its own HTTPS origin, the drawer with cards from other creators, and launching `kit/meet` from the drawer with its own automatic round trip.
 
+- 2026-10-13: the team profile (`compose.team.yml`) was deployed on a Hetzner CX23 server for the public demonstration at kit.kitlane.dev with Google as the identity provider: Let's Encrypt certificates for the portal and on-demand certificates for tool hosts (an unknown host gets none), Google sign-in through oauth2-proxy with administrator mapping from `KITLANE_ADMIN_USERS`, the in-container seed, the nightly reset, the automatic tool-origin sign-in round trip, and the drawer, all observed in a browser by the author and confirmed in the server's discovery events. Found and fixed on the way: the synthetic briefs file was excluded from git by a `.gitignore` rule.
+
 ### Written but not executed
 
-- The team profile (`compose.team.yml`: ACME certificates and on-demand TLS for tool hosts).
+- Nothing in the package remains unexecuted. The pilot study, the independent installation, and the second-builder adaptation test are still to be performed (see below).
 
 ### Not performed
 
