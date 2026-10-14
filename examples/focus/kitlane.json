@@ -3,5 +3,6 @@
   "title": "Focus timer",
   "purpose": "A focus timer that remembers your preferences and logs sessions.",
   "tags": ["productivity", "wellbeing"],
+  "theme": "dark",
   "deploy": "./index.html"
 }

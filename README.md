@@ -2,7 +2,7 @@
 
 An internal front door for the software people make.
 
-Give an employee-made tool a memorable address, and let using that tool reveal what else colleagues have made. Kitlane publishes static tools (or registers existing URLs) under short names such as `kit/prep`, launches hosted tools inside a shell with a persistent **Explore tools** rail, and lets anyone make a copy of a published tool and adapt it with whatever builder they prefer. Hosted tools get identity, durable per-user storage, and company-readable shared collections through a small browser SDK.
+Give an employee-made tool a memorable address, and let using that tool reveal what else colleagues have made. Kitlane publishes static tools (or registers existing URLs) under short names such as `kit/prep`, launches hosted tools inside a shell with a persistent **Explore tools** rail, and lets anyone remix a published tool and adapt it with whatever builder they prefer, with the original maker credited. Hosted tools get identity, durable per-user storage, and company-readable shared collections through a small browser SDK.
 
 The rail is the primary discovery mechanism. A portal with search and browsing exists for deeper exploration, but success does not depend on people remembering to visit a directory. Builder neutrality is central: a tool can come from an agent, a visual builder, or ordinary development, and AI use is never an eligibility requirement.
 
@@ -15,9 +15,10 @@ The rail is the primary discovery mechanism. A portal with search and browsing e
 | URL registration, stable IDs, memorable names with history, reserved names | Implemented, tested |
 | CLI publishing of a single HTML file or a folder; immutable versions; rollback | Implemented, tested |
 | Owner, co-maintainer, and administrator authorization; freeze; content removal with audit | Implemented, tested |
-| Shell with the Explore tools rail and drawer; explainable recommendations | Implemented, checked manually in Chrome |
-| Portal: search, filters, recent tools, my tools, tool details, lineage, name history, admin | Implemented |
-| Make a copy with lineage; download published files; `kitlane pull` | Implemented, tested |
+| Shell with the Explore tools rail and drawer; explainable recommendations; the rail matches the tool's theme | Implemented, checked manually in Chrome |
+| Portal: Today page with rule-based picks and an administrator override, search, filters, tool pages, lineage, name history, preferences, admin | Implemented |
+| Visual system: self-hosted type, light and dark themes, one stylesheet | Implemented, checked manually in Chrome at desktop and phone widths |
+| Remix with lineage (the original maker stays credited); download published files; `kitlane pull` | Implemented, tested |
 | Identity SDK, personal documents, shared collections, writer grants, updater credentials | Implemented, tested |
 | Discovery measurement with a north-star report | Implemented, tested |
 | Catalog export; operator backup and restore scripts | Implemented; scripts run once against the local stack |
@@ -61,13 +62,17 @@ One server, Docker, a domain with records for `kit.<domain>` and `*.sites.kit.<d
 
 ## Screenshots
 
-The shell for `kit/prep` with the Explore tools handle on the right (development build, synthetic data):
+Development build with synthetic data. The Today page, where the picks are chosen by rules an administrator can override:
+
+![The Today page: a lead story, three more picks, and two lists of tools](docs/images/portal-today.jpg)
+
+The shell for `kit/prep` with the Explore tools handle on the right. The rail matches the tool's theme, here light:
 
 ![The prep tool inside the Kitlane shell with the Explore tools rail](docs/images/shell-prep-rail.jpg)
 
-The drawer open: "This tool", then recommendation cards with the reason each one appears:
+The drawer open on a dark tool: "This tool", then "Also on the shelf" with the reason each row appears:
 
-![The Explore tools drawer showing recommendations from other creators](docs/images/shell-prep-drawer.jpg)
+![The Explore tools drawer showing numbered picks from other makers with reasons](docs/images/shell-prep-drawer.jpg)
 
 ## Repository layout
 

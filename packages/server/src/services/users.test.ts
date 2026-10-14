@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createHarness, type Harness } from "../test/harness.js";
-import { upsertUserFromIdentity } from "./users.js";
+import { KitlaneError } from "../errors.js";
+import { createHarness, PORTAL, type Harness } from "../test/harness.js";
+import { publicIdentity, setUserPreferences, upsertUserFromIdentity } from "./users.js";
 
 let h: Harness;
 beforeAll(async () => {
@@ -60,5 +61,51 @@ describe("administrator-assigned teams", () => {
     const page = await (await h.req(`${PORTAL}/.admin`, { cookie: await h.portalCookie(admin) })).text();
     expect(page).toContain("Assign a team");
     expect(page).toContain("assigned");
+  });
+});
+
+describe("theme preferences", () => {
+  it("default to following the OS and matching the tool", async () => {
+    const u = await upsertUserFromIdentity(h.db, h.config, { externalId: "oidc-sub-theme", displayName: "theo", email: "theo@example.test" });
+    expect(u.theme_pref).toBe("system");
+    expect(u.rail_pref).toBe("tool");
+  });
+  it("stores valid values, one at a time or together, and rejects anything else", async () => {
+    const u = await upsertUserFromIdentity(h.db, h.config, { externalId: "oidc-sub-theme", displayName: "theo", email: "theo@example.test" });
+    await setUserPreferences(h.db, u.id, { themePref: "dark" });
+    let row = (await h.db.query(`SELECT theme_pref, rail_pref FROM users WHERE id = $1`, [u.id])).rows[0];
+    expect(row).toEqual({ theme_pref: "dark", rail_pref: "tool" });
+    await setUserPreferences(h.db, u.id, { railPref: "light" });
+    row = (await h.db.query(`SELECT theme_pref, rail_pref FROM users WHERE id = $1`, [u.id])).rows[0];
+    expect(row).toEqual({ theme_pref: "dark", rail_pref: "light" });
+    await setUserPreferences(h.db, u.id, { themePref: "system", railPref: "dark" });
+    row = (await h.db.query(`SELECT theme_pref, rail_pref FROM users WHERE id = $1`, [u.id])).rows[0];
+    expect(row).toEqual({ theme_pref: "system", rail_pref: "dark" });
+    await setUserPreferences(h.db, u.id, {});
+    for (const bad of [{ themePref: "blue" }, { themePref: "" }, { railPref: "system" }, { railPref: "auto" }] as any[]) {
+      await expect(setUserPreferences(h.db, u.id, bad)).rejects.toMatchObject({ code: "bad_request" });
+      await expect(setUserPreferences(h.db, u.id, bad)).rejects.toBeInstanceOf(KitlaneError);
+    }
+    expect((await h.db.query(`SELECT theme_pref, rail_pref FROM users WHERE id = $1`, [u.id])).rows[0]).toEqual({ theme_pref: "system", rail_pref: "dark" });
+    // Preferences survive a later sign-in.
+    const again = await upsertUserFromIdentity(h.db, h.config, { externalId: "oidc-sub-theme", displayName: "theo", email: "theo@example.test" });
+    expect(again.theme_pref).toBe("system");
+    expect(again.rail_pref).toBe("dark");
+  });
+  it("are saved from the /.me preferences form and never exposed to hosted tools", async () => {
+    const u = await h.user("prefs");
+    const cookie = await h.portalCookie(u);
+    const res = await h.req(`${PORTAL}/.me/preferences`, { method: "POST", cookie, headers: { "content-type": "application/x-www-form-urlencoded", origin: PORTAL }, body: "theme=light&rail=dark", redirect: "manual" });
+    expect(res.status).toBe(303);
+    expect(res.headers.get("location")).toBe("/.me?flash=Preferences+saved#preferences");
+    const row = (await h.db.query(`SELECT * FROM users WHERE id = $1`, [u.id])).rows[0];
+    expect(row.theme_pref).toBe("light");
+    expect(row.rail_pref).toBe("dark");
+    const invalid = await h.req(`${PORTAL}/.me/preferences`, { method: "POST", cookie, headers: { "content-type": "application/x-www-form-urlencoded", origin: PORTAL }, body: "theme=sepia", redirect: "manual" });
+    expect(invalid.status).toBe(400);
+    const exposed = publicIdentity(row, h.config);
+    expect(exposed).not.toHaveProperty("theme_pref");
+    expect(exposed).not.toHaveProperty("rail_pref");
+    expect(Object.keys(exposed).sort()).toEqual(["displayName", "id"]);
   });
 });

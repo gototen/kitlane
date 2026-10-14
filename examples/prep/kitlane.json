@@ -3,5 +3,6 @@
   "title": "Pre-call brief",
   "purpose": "Turn public company facts into a one-page brief before a call.",
   "tags": ["meetings", "research", "sales"],
+  "theme": "system",
   "deploy": "./index.html"
 }

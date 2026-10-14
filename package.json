@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build": "npm run build -w packages/sdk && npm run build -w packages/server && npm run build -w packages/cli && npm run build -w examples/tz-minified",
-    "test": "npm run test -w packages/server && npm run test -w packages/cli",
+    "test": "npm run test -w packages/sdk && npm run test -w packages/server && npm run test -w packages/cli",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev": "npm run dev -w packages/server",
     "seed": "npm run seed -w packages/server"

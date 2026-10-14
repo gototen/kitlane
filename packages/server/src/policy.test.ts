@@ -54,16 +54,16 @@ describe("publishing allowlist (KITLANE_PUBLISHERS)", () => {
     expect(up.status).toBe(403);
   });
 
-  it("shows the banner on portal pages and in the drawer, and hides Make a copy from non-publishers", async () => {
+  it("shows the banner on portal pages and in the drawer, and hides Remix from non-publishers", async () => {
     const cookie = await h.portalCookie(stranger);
     const home = await (await h.req(`${PORTAL}/`, { cookie })).text();
     expect(home).toContain("Public demo: data is reset nightly.");
     const detail = await (await h.req(`${PORTAL}/.tool/${toolId}`, { cookie })).text();
-    expect(detail).not.toContain("Make a copy");
+    expect(detail).not.toContain("> Remix");
     const drawer = await (await h.req(`${PORTAL}/.api/shell/${toolId}/drawer`, { cookie })).text();
-    expect(drawer).not.toContain("Make a copy");
+    expect(drawer).not.toContain("> Remix");
     expect(drawer).toContain("Public demo");
     const invitedDetail = await (await h.req(`${PORTAL}/.tool/${toolId}`, { cookie: await h.portalCookie(invited) })).text();
-    expect(invitedDetail).toContain("Make a copy");
+    expect(invitedDetail).toContain("> Remix");
   });
 });

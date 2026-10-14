@@ -44,3 +44,15 @@ Tests create an in-memory PGlite database per file and exercise the HTTP surface
 ## Pull requests
 
 Describe what changed, why, and how you verified it. Keep changes scoped. Update the relevant document under `docs/` when behaviour changes.
+
+## Screenshots for the README
+
+`scripts/screenshot.mjs` drives a headless Chrome through the DevTools protocol against a running dev server. Sign in once with the dev login form to get a `kitlane_portal` cookie (for example with `curl -c jar.txt -X POST -d "user=<id>&rd=/" http://kit.localhost:3000/.dev/login`, where the user id comes from the buttons on `/.dev/login`), then:
+
+```sh
+node scripts/screenshot.mjs docs/images/portal-today.jpg http://kit.localhost:3000/ --cookie kitlane_portal=<value> --scheme light
+node scripts/screenshot.mjs docs/images/shell-prep-rail.jpg http://kit.localhost:3000/prep --cookie kitlane_portal=<value> --scheme light
+node scripts/screenshot.mjs docs/images/shell-prep-drawer.jpg http://kit.localhost:3000/prep --cookie kitlane_portal=<value> --scheme dark --open-drawer
+```
+
+`--width 390 --height 844` gives a phone-width capture. `CHROME=<path>` points at a different Chrome binary.

@@ -128,7 +128,22 @@ const stop = kitlane.onRefresh(load, { intervalMs: 60_000 });   // minimum inter
 ```js
 kitlane.shell.isFramed();          // true inside the Kitlane shell
 kitlane.shell.setTitle("Acme");    // updates the browser tab via a validated postMessage; sets document.title when not framed
+kitlane.shell.setTheme("dark");    // tells the shell which scheme the tool rendered; no-op when not framed
 ```
+
+### Theme report
+
+The shell matches its Explore tools rail to the tool it frames. When the SDK loads inside the shell it reports the scheme the page actually rendered, so a tool needs no code for the common case:
+
+1. On `DOMContentLoaded` and `load` (immediately if the document is already loaded) it reads `getComputedStyle(document.body).backgroundColor`, falling back to `document.documentElement` when the body is transparent, then to a single-valued `<meta name="color-scheme">`, then to `matchMedia("(prefers-color-scheme: dark)")`.
+2. It parses `rgb()`/`rgba()` and computes WCAG relative luminance: below 0.5 is `dark`, otherwise `light`.
+3. It posts `{ type: "kitlane:theme", scheme: "light" | "dark" }` to the parent window, and posts again (debounced about 150 ms, only on change) when the OS scheme changes or when `class`, `style`, or `data-theme` change on `html` or `body`.
+
+Everything is wrapped so it never throws, and it does nothing outside an iframe. Call `kitlane.shell.setTheme(scheme)` when your tool changes theme in a way the automatic check cannot see (for example a canvas-drawn background).
+
+What the shell does with it: the message is accepted only from the framed tool's origin and window, and it changes the rail only when the theme is not locked. The theme is locked when the person forced the rail to always light or always dark, or when the tool declares `"theme": "light"` or `"dark"` in `kitlane.json`; a declared `"system"` or no declaration lets the report apply. Without a report, the shell uses the theme sniffed from `index.html`'s color-scheme meta at publish time, then the person's portal preference, then the OS. See `docs/architecture.md`, "Theme resolution".
+
+The pure helpers (`parseColor`, `relativeLuminance`, `schemeForColor`, `schemeFromColorSchemeMeta`, `isTransparent`) are exported from the module build for tools that want the same classification.
 
 ## Errors
 

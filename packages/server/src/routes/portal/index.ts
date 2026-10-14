@@ -9,6 +9,7 @@ import { PORTAL_COOKIE, assertReturnParam, clearCookieHeader, cookieHeader, crea
 import { contentTypeFor } from "../../mime.js";
 import { getEntry, getEntryByName, listMaintainers } from "../../services/entries.js";
 import { getActiveVersion } from "../../services/versions.js";
+import { resolveShellTheme } from "../../services/theme.js";
 import { listUsers, upsertUserFromIdentity } from "../../services/users.js";
 import { recordDiscoveryEvent } from "../../services/discovery.js";
 import { isValidName } from "../../names.js";
@@ -152,7 +153,8 @@ export function portalApp(services: Services) {
     const directUrl = `${toolOrigin(config, entry.id)}/${safeRest}${qs ? "?" + qs : ""}`;
     const maintainers = (await listMaintainers(db, entry.id)).map((m) => m.display_name);
     const replacement = entry.replacement_entry_id ? await getEntry(db, entry.replacement_entry_id) : null;
-    return c.html(shellPage(config, { entry, iframeSrc, directUrl, maintainers, replacement, userName: identity.user.display_name }));
+    const resolved = resolveShellTheme({ entry, version: active, user: identity.user });
+    return c.html(shellPage(config, { entry, iframeSrc, directUrl, maintainers, replacement, userName: identity.user.display_name, theme: resolved.theme, themeSource: resolved.source, themeLocked: resolved.locked }));
   }
 
   return app;

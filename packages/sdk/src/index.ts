@@ -7,6 +7,11 @@
  * here carries credentials; the browser session cookie for this origin does.
  */
 
+import { schemeForColor, schemeFromColorSchemeMeta, type Scheme } from "./theme.js";
+
+export { isTransparent, parseColor, relativeLuminance, schemeForColor, schemeFromColorSchemeMeta } from "./theme.js";
+export type { Scheme } from "./theme.js";
+
 export type FilterOp = "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "contains";
 export type Filter = [field: string, op: FilterOp, value: unknown];
 
@@ -186,6 +191,82 @@ function validName(name: string): string {
 let meCache: Promise<Identity> | null = null;
 let toolCache: Promise<ToolInfo> | null = null;
 
+// ---- Runtime theme report: tells the shell which scheme this tool rendered so the rail can match it. ----
+let reportedScheme: Scheme | null = null;
+
+function postTheme(scheme: Scheme): void {
+  if (!kitlane.shell.isFramed()) return;
+  try {
+    // No secrets travel in this message and the shell validates the sender, so "*" is acceptable.
+    window.parent.postMessage({ type: "kitlane:theme", scheme }, "*");
+  } catch {
+    // ignore
+  }
+}
+
+/** The scheme the page actually rendered: body background, then html, then a single-valued meta, then the OS. */
+function renderedScheme(): Scheme | null {
+  try {
+    const fromBody = document.body ? schemeForColor(getComputedStyle(document.body).backgroundColor) : null;
+    if (fromBody) return fromBody;
+    const fromRoot = schemeForColor(getComputedStyle(document.documentElement).backgroundColor);
+    if (fromRoot) return fromRoot;
+    const metas = document.getElementsByTagName("meta");
+    for (let i = 0; i < metas.length; i++) {
+      if ((metas[i].getAttribute("name") || "").toLowerCase() !== "color-scheme") continue;
+      const fromMeta = schemeFromColorSchemeMeta(metas[i].getAttribute("content"));
+      if (fromMeta) return fromMeta;
+      break;
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  } catch {
+    return null;
+  }
+}
+
+function reportRenderedScheme(): void {
+  const scheme = renderedScheme();
+  if (!scheme || scheme === reportedScheme) return;
+  reportedScheme = scheme;
+  postTheme(scheme);
+}
+
+/** Reports on load and whenever the rendered scheme changes. No-op outside an iframe; never throws. */
+function startThemeReporting(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  if (!kitlane.shell.isFramed()) return;
+  let timer: number | null = null;
+  const schedule = () => {
+    if (timer !== null) window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      timer = null;
+      reportRenderedScheme();
+    }, 150);
+  };
+  if (document.readyState !== "loading") reportRenderedScheme();
+  else document.addEventListener("DOMContentLoaded", reportRenderedScheme);
+  if (document.readyState !== "complete") window.addEventListener("load", reportRenderedScheme);
+  try {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    if (typeof mq.addEventListener === "function") mq.addEventListener("change", schedule);
+    else if (typeof (mq as any).addListener === "function") (mq as any).addListener(schedule);
+  } catch {
+    // ignore
+  }
+  try {
+    const observer = new MutationObserver(schedule);
+    const options: MutationObserverInit = { attributes: true, attributeFilter: ["class", "style", "data-theme"] };
+    observer.observe(document.documentElement, options);
+    const observeBody = () => {
+      if (document.body) observer.observe(document.body, options);
+    };
+    if (document.body) observeBody();
+    else document.addEventListener("DOMContentLoaded", observeBody);
+  } catch {
+    // ignore
+  }
+}
+
 export const kitlane = {
   /** Minimal approved identity: an opaque user ID and display name (team/email per installation policy). */
   me(): Promise<Identity> {
@@ -245,6 +326,16 @@ export const kitlane = {
         // ignore
       }
     },
+    /**
+     * Tells the shell which scheme this tool rendered so the Explore tools rail matches it. The SDK
+     * reports this automatically on load and when the page's theme changes; call it yourself when
+     * your tool switches theme in a way the automatic check cannot see. No-op when not framed.
+     */
+    setTheme(scheme: "light" | "dark"): void {
+      if (scheme !== "light" && scheme !== "dark") return;
+      reportedScheme = scheme;
+      postTheme(scheme);
+    },
   },
 
   /** Fires when the page regains focus or becomes visible; handy for refreshing shared data. */
@@ -267,6 +358,12 @@ export const kitlane = {
 
 export type Kitlane = typeof kitlane;
 export default kitlane;
+
+try {
+  startThemeReporting();
+} catch {
+  // the report is best effort and must never break a tool
+}
 
 declare global {
   interface Window {

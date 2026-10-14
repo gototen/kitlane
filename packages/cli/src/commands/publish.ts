@@ -1,6 +1,6 @@
 import path from "node:path";
 import { ApiError } from "../client.js";
-import { clientFor, parse, readKitlaneJson, splitTags, type Command } from "../context.js";
+import { clientFor, parse, readKitlaneJson, splitTags, themeOf, type Command } from "../context.js";
 import { formatBytes, printJson, println, warn } from "../output.js";
 import { packTarget } from "../pack.js";
 
@@ -23,6 +23,7 @@ export const publish: Command = {
     if (!target) throw new Error("Give a path to publish (a single HTML file or a folder with index.html), or set \"deploy\" in kitlane.json.");
     const name = ((values.name as string | undefined) ?? meta?.name ?? "").trim().toLowerCase();
     if (!name) throw new Error("Give --name <name> or set \"name\" in kitlane.json.");
+    const theme = themeOf(meta);
 
     const packed = await packTarget(path.resolve(target));
     for (const s of packed.skippedSymlinks) warn(`skipping symlink: ${s}`);
@@ -46,11 +47,18 @@ export const publish: Command = {
         kind: "tool",
         repoUrl: meta?.repoUrl,
         team: meta?.team,
+        theme,
       });
       tool = created.tool;
       if (!ctx.json) println(`Claimed ${me.shortcut}/${name}`);
+      if (theme && !ctx.json) println(`Theme: ${theme} (from kitlane.json)`);
     }
     if (tool.mode !== "hosted") throw new Error(`${me.shortcut}/${name} is an external entry; it has no hosted files to publish.`);
+    if (theme && tool.theme !== theme) {
+      // The manifest is the source of truth for the declared theme; align the catalog before uploading.
+      tool = (await client.patch(`/tools/${tool.id}`, { theme })).tool;
+      if (!ctx.json) println(`Theme: ${theme} (from kitlane.json)`);
+    }
 
     const headers: Record<string, string> = {};
     if (values.note) headers["x-kitlane-note"] = String(values.note);

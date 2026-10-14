@@ -201,10 +201,11 @@ describe("publishing through the CLI API", () => {
       const res = await h.req(`${PORTAL}/.api/shell/${toolId}/drawer`, { cookie });
       expect(res.status).toBe(200);
       const html = await res.text();
-      expect(html).toContain("This tool");
+      // Anchors that survive restyling: the framed tool's title, the recommendation, and the direct link the shell client rewires.
+      expect(html).toContain("Pre-call brief");
       expect(html).toContain("Meeting finder");
       expect(html).toContain("Also about meetings");
-      expect(html).toContain("Open directly");
+      expect(html).toContain("data-kl-direct");
     });
     it("filters the catalog by tag, creator, and kind without a search term", async () => {
       const cookie = await h.portalCookie(alice);
@@ -291,11 +292,11 @@ describe("publishing through the CLI API", () => {
       const aliceOnCopy = await h.toolCookie(alice, copy.id);
       const fresh = await h.req(`${copy.origin}/._kitlane/data/user/prefs/theme`, { cookie: aliceOnCopy });
       expect(fresh.status).toBe(404);
-      // Lineage shows on both detail pages.
+      // Lineage shows on both detail pages: each links to the other (wording is the view's business).
       const detail = await (await h.req(`${PORTAL}/.tool/${copy.id}`, { cookie: await h.portalCookie(bob) })).text();
-      expect(detail).toContain("Copied from");
+      expect(detail).toContain(`href="/.tool/${toolId}"`);
       const original = await (await h.req(`${PORTAL}/.tool/${toolId}`, { cookie: await h.portalCookie(alice) })).text();
-      expect(original).toContain("Copies made from this tool");
+      expect(original).toContain(`href="/.tool/${copy.id}"`);
     });
 
     it("downloads a version as tar.gz", async () => {
@@ -332,6 +333,96 @@ describe("publishing through the CLI API", () => {
       expect(info.tool.owner.id).toBe(bob.id);
       expect(info.tool.creator.id).toBe(alice.id);
     });
+  });
+});
+
+describe("theme plumbing", () => {
+  const form = (cookie: string, body: string) => ({ method: "POST", cookie, headers: { "content-type": "application/x-www-form-urlencoded", origin: PORTAL }, body, redirect: "manual" as const });
+  const detectedOf = async (entryId: string) => (await h.db.query<{ detected_theme: string | null }>(`SELECT v.detected_theme FROM deployments d JOIN versions v ON v.id = d.active_version_id WHERE d.entry_id = $1`, [entryId])).rows[0].detected_theme;
+  let darkToolId: string;
+
+  it("sniffs the color-scheme meta from index.html at publish time", async () => {
+    const dark = await h.publish(alice, "dusk", { "index.html": '<!doctype html><html><head><meta name="color-scheme" content="dark"><title>Dusk</title></head><body>dark</body></html>' });
+    expect(await detectedOf(dark.id)).toBe("dark");
+    const plain = await h.publish(alice, "plain", { "index.html": "<!doctype html><title>Plain</title><h1>no meta</h1>" });
+    expect(await detectedOf(plain.id)).toBeNull();
+    const both = await h.publish(alice, "both", { "index.html": "<meta name='color-scheme' content='light dark'><h1>adaptive</h1>" });
+    expect(await detectedOf(both.id)).toBe("system");
+  });
+
+  it("the CLI API accepts, returns, clears, and validates a declared theme", async () => {
+    const t = await h.token(alice);
+    const headers = { "content-type": "application/json", ...bearer(t) };
+    const created = await h.req(`${PORTAL}/.api/cli/tools`, { ...jsonInit("POST", { name: "noir", title: "Noir", theme: "dark" }), headers });
+    expect(created.status).toBe(201);
+    const tool = (await created.json()).tool;
+    darkToolId = tool.id;
+    expect(tool.theme).toBe("dark");
+    const bad = await h.req(`${PORTAL}/.api/cli/tools`, { ...jsonInit("POST", { name: "noir2", title: "x", theme: "blue" }), headers });
+    expect(bad.status).toBe(400);
+    const toSystem = await h.req(`${PORTAL}/.api/cli/tools/${tool.id}`, { ...jsonInit("PATCH", { theme: "system" }), headers });
+    expect((await toSystem.json()).tool.theme).toBe("system");
+    const cleared = await h.req(`${PORTAL}/.api/cli/tools/${tool.id}`, { ...jsonInit("PATCH", { theme: null }), headers });
+    expect((await cleared.json()).tool.theme).toBeNull();
+    const invalid = await h.req(`${PORTAL}/.api/cli/tools/${tool.id}`, { ...jsonInit("PATCH", { theme: "sepia" }), headers });
+    expect(invalid.status).toBe(400);
+    const back = await h.req(`${PORTAL}/.api/cli/tools/${tool.id}`, { ...jsonInit("PATCH", { theme: "dark" }), headers });
+    expect((await back.json()).tool.theme).toBe("dark");
+    const info = await (await h.req(`${PORTAL}/.api/cli/tools/${tool.id}`, { headers: bearer(t) })).json();
+    expect(info.tool.theme).toBe("dark");
+  });
+
+  it("the portal metadata form accepts an optional theme field, with an empty value clearing it", async () => {
+    const cookie = await h.portalCookie(alice);
+    const set = await h.req(`${PORTAL}/.tool/${darkToolId}/metadata`, form(cookie, "title=Noir&theme=light"));
+    expect(set.status).toBe(303);
+    expect((await h.db.query(`SELECT theme FROM entries WHERE id = $1`, [darkToolId])).rows[0].theme).toBe("light");
+    const clear = await h.req(`${PORTAL}/.tool/${darkToolId}/metadata`, form(cookie, "title=Noir&theme="));
+    expect(clear.status).toBe(303);
+    expect((await h.db.query(`SELECT theme FROM entries WHERE id = $1`, [darkToolId])).rows[0].theme).toBeNull();
+    const rejected = await h.req(`${PORTAL}/.tool/${darkToolId}/metadata`, form(cookie, "title=Noir&theme=sepia"));
+    expect(rejected.status).toBe(400);
+    const untouched = await h.req(`${PORTAL}/.tool/${darkToolId}/metadata`, form(cookie, "title=Noir+again"));
+    expect(untouched.status).toBe(303);
+    expect((await h.db.query(`SELECT theme FROM entries WHERE id = $1`, [darkToolId])).rows[0].theme).toBeNull();
+    await h.req(`${PORTAL}/.tool/${darkToolId}/metadata`, form(cookie, "title=Noir&theme=dark"));
+  });
+
+  it("the shell resolves the rail theme: declared locks it, detected does not, a rail preference overrides both", async () => {
+    const carol = await h.user("carol-theme");
+    const cookie = await h.portalCookie(carol);
+    const t = await h.token(alice);
+    // Declared dark (noir): locked, whatever the viewer prefers.
+    await h.req(`${PORTAL}/.api/cli/tools/${darkToolId}/versions`, { method: "POST", headers: { "content-type": "application/gzip", ...bearer(t) }, body: await h.tarball({ "index.html": "<h1>noir</h1>" }) });
+    const declared = await (await h.req(`${PORTAL}/noir`, { cookie })).text();
+    expect(declared).toContain('"theme":"dark"');
+    expect(declared).toContain('"themeLocked":true');
+    // Detected dark (dusk) with no declaration: applied but not locked, so the runtime report may override.
+    const detected = await (await h.req(`${PORTAL}/dusk`, { cookie })).text();
+    expect(detected).toContain('"theme":"dark"');
+    expect(detected).toContain('"themeLocked":false');
+    // Nothing declared or detected (plain): follow the OS.
+    const os = await (await h.req(`${PORTAL}/plain`, { cookie })).text();
+    expect(os).toContain('"theme":null');
+    expect(os).toContain('"themeLocked":false');
+    // A portal preference fills the gap for plain, and a forced rail preference overrides even a declaration.
+    expect((await h.req(`${PORTAL}/.me/preferences`, form(cookie, "theme=light&rail=tool"))).status).toBe(303);
+    expect(await (await h.req(`${PORTAL}/plain`, { cookie })).text()).toContain('"theme":"light"');
+    expect(await (await h.req(`${PORTAL}/dusk`, { cookie })).text()).toContain('"theme":"dark"');
+    expect((await h.req(`${PORTAL}/.me/preferences`, form(cookie, "rail=light"))).status).toBe(303);
+    const forced = await (await h.req(`${PORTAL}/noir`, { cookie })).text();
+    expect(forced).toContain('"theme":"light"');
+    expect(forced).toContain('"themeLocked":true');
+  });
+
+  it("a remix carries the source's declared and detected theme", async () => {
+    const res = await h.req(`${PORTAL}/.api/cli/tools/dusk/copy`, { ...jsonInit("POST", { name: "dusk-bob" }), headers: { "content-type": "application/json", ...bearer(await h.token(bob)) } });
+    expect(res.status).toBe(201);
+    const remix = (await res.json()).tool;
+    expect(remix.theme).toBeNull();
+    expect(await detectedOf(remix.id)).toBe("dark");
+    const declared = await h.req(`${PORTAL}/.api/cli/tools/noir/copy`, { ...jsonInit("POST", { name: "noir-bob" }), headers: { "content-type": "application/json", ...bearer(await h.token(bob)) } });
+    expect((await declared.json()).tool.theme).toBe("dark");
   });
 });
 

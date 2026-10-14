@@ -9,7 +9,11 @@ import tar from "tar-stream";
 import type { Limits } from "../config.js";
 import { KitlaneError } from "../errors.js";
 import { contentTypeFor, extensionOf } from "../mime.js";
-import type { ManifestFile } from "../types.js";
+import type { ManifestFile, ThemeSetting } from "../types.js";
+import { detectThemeFromHtml } from "./theme.js";
+
+/** How much of a staged index.html the publish-time theme sniff reads: the head is at the top. */
+export const THEME_SNIFF_BYTES = 64 * 1024;
 
 
 /** Top-level paths reserved for the platform. Hosted assets can never shadow them. */
@@ -177,6 +181,25 @@ export async function extractUploadToStaging(input: Readable, stagingDir: string
   }
   files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   return { files, totalBytes, entry: "index.html" };
+}
+
+/**
+ * Publish-time theme sniff: reads the first 64 KiB of the staged entry file and looks for the
+ * color-scheme meta. Never throws; an unreadable file simply yields null (unknown).
+ */
+export async function sniffStagedTheme(stagingDir: string, entry: string): Promise<ThemeSetting | null> {
+  const file = path.join(stagingDir, entry);
+  let handle: fsp.FileHandle | null = null;
+  try {
+    handle = await fsp.open(file, "r");
+    const buf = Buffer.alloc(THEME_SNIFF_BYTES);
+    const { bytesRead } = await handle.read(buf, 0, THEME_SNIFF_BYTES, 0);
+    return detectThemeFromHtml(buf.subarray(0, bytesRead).toString("utf8"));
+  } catch {
+    return null;
+  } finally {
+    await handle?.close().catch(() => undefined);
+  }
 }
 
 export function manifestHash(files: ManifestFile[]): string {

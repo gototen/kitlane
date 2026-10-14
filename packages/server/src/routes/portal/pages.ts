@@ -9,9 +9,10 @@ import * as versions from "../../services/versions.js";
 import * as docs from "../../services/documents.js";
 import * as tokens from "../../services/tokens.js";
 import { listAuditForCollection, listAuditForEntry, listRecentAudit } from "../../services/audit.js";
-import { allTags, recentEntries, searchEntries } from "../../services/search.js";
+import { searchEntries } from "../../services/search.js";
+import { buildToday } from "../../services/today.js";
 import { measurementReport } from "../../services/discovery.js";
-import { findUserByHandle, getUser, listRecentUsers, setAdmin, setUserTeam } from "../../services/users.js";
+import { findUserByHandle, getUser, listRecentUsers, setAdmin, setUserPreferences, setUserTeam } from "../../services/users.js";
 import { isValidName } from "../../names.js";
 import {
   adminPage,
@@ -47,8 +48,8 @@ export function pagesApp(services: Services) {
 
   app.get("/", async (c) => {
     const u = user(c);
-    const [recent, mine, tags] = await Promise.all([recentEntries(db, 12), entries.listEntries(db, { maintainerId: u.id, limit: 12 }), allTags(db)]);
-    return c.html(homePage(config, u, recent, mine, tags));
+    const today = await buildToday(db, u.id, config.shortcut);
+    return c.html(homePage(config, u, today, entries.canPublish(config, u)));
   });
 
   app.get("/.search", async (c) => {
@@ -93,7 +94,7 @@ export function pagesApp(services: Services) {
   app.get("/.me", async (c) => {
     const u = user(c);
     const [mine, toks, cols] = await Promise.all([entries.listEntries(db, { maintainerId: u.id, includeRetired: true, limit: 200 }), tokens.listAccessTokens(db, u.id), docs.listCollections(db, { ownerId: u.id })]);
-    return c.html(mePage(config, u, mine, toks, c.req.query("token") ?? null, cols));
+    return c.html(mePage(config, u, mine, toks, c.req.query("token") ?? null, cols, c.req.query("flash")));
   });
   app.post("/.me/tokens", async (c) => {
     const u = user(c);
@@ -105,6 +106,16 @@ export function pagesApp(services: Services) {
     const u = user(c);
     await tokens.revokeAccessToken(db, userActor(u.id), u.id, c.req.param("id"));
     return c.redirect("/.me#tokens", 303);
+  });
+  // Theme preferences: `theme` (light|dark|system) for the portal, `rail` (tool|light|dark) for the shell rail.
+  app.post("/.me/preferences", async (c) => {
+    const u = user(c);
+    const b = await c.req.parseBody();
+    await setUserPreferences(db, u.id, {
+      ...(b.theme !== undefined ? { themePref: str(b.theme) as any } : {}),
+      ...(b.rail !== undefined ? { railPref: str(b.rail) as any } : {}),
+    });
+    return c.redirect("/.me?flash=Preferences+saved#preferences", 303);
   });
 
   // --- Tool detail and maintenance ---
@@ -173,7 +184,7 @@ export function pagesApp(services: Services) {
     if (!active) throw badRequest("This tool has no published version to copy");
     try {
       const created = await versions.copyTool(db, storage, userActor(u.id), u, entry, active, { name: str(b.name), title: str(b.title) });
-      return c.redirect(flashUrl(`/.tool/${created.id}`, "Copy created. Download the files, adapt them with your preferred builder, and republish."), 303);
+      return c.redirect(flashUrl(`/.tool/${created.id}`, "Remix created. Pull the files, change them with whatever you like, and publish."), 303);
     } catch (err) {
       if (err instanceof KitlaneError) return c.html(copyPage(config, u, entry, err.message), err.status as 400);
       throw err;
@@ -190,6 +201,8 @@ export function pagesApp(services: Services) {
       team: str(b.team) || null,
       repoUrl: str(b.repoUrl) || null,
       ...(entry.mode === "external" ? { externalUrl: str(b.externalUrl) } : {}),
+      // Optional theme field: light|dark|system, or "" to clear the declaration.
+      ...(b.theme !== undefined ? { theme: (str(b.theme) || null) as any } : {}),
     });
     return c.redirect(flashUrl(`/.tool/${entry.id}`, "Saved."), 303);
   });

@@ -1,7 +1,9 @@
 import type { Queryable } from "../db/index.js";
 import type { Config } from "../config.js";
+import { badRequest } from "../errors.js";
 import { newId } from "../ids.js";
-import type { User } from "../types.js";
+import type { RailPref, ThemeSetting, User } from "../types.js";
+import { isRailPref, isThemeSetting } from "./theme.js";
 
 export interface IdentityClaims {
   externalId: string;
@@ -94,6 +96,31 @@ export async function listRecentUsers(q: Queryable, limit = 50): Promise<User[]>
 
 export async function setAdmin(q: Queryable, userId: string, isAdmin: boolean): Promise<void> {
   await q.query(`UPDATE users SET is_admin = $2 WHERE id = $1`, [userId, isAdmin]);
+}
+
+export interface UserPreferences {
+  /** Portal theme: light, dark, or system (follow the OS). */
+  themePref?: ThemeSetting;
+  /** Rail theme: tool (match the framed tool), or always light or dark. */
+  railPref?: RailPref;
+}
+
+/** Per-person theme preferences. Values are validated here because they arrive from forms. */
+export async function setUserPreferences(q: Queryable, userId: string, prefs: UserPreferences): Promise<void> {
+  const sets: string[] = [];
+  const params: unknown[] = [userId];
+  if (prefs.themePref !== undefined) {
+    if (!isThemeSetting(prefs.themePref)) throw badRequest('Theme preference must be "light", "dark", or "system"');
+    params.push(prefs.themePref);
+    sets.push(`theme_pref = $${params.length}`);
+  }
+  if (prefs.railPref !== undefined) {
+    if (!isRailPref(prefs.railPref)) throw badRequest('Rail preference must be "tool", "light", or "dark"');
+    params.push(prefs.railPref);
+    sets.push(`rail_pref = $${params.length}`);
+  }
+  if (!sets.length) return;
+  await q.query(`UPDATE users SET ${sets.join(", ")} WHERE id = $1`, params);
 }
 
 /** Minimal identity exposed to hosted tools through kitlane.me(). */

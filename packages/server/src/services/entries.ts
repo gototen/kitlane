@@ -2,9 +2,10 @@ import type { Queryable } from "../db/index.js";
 import type { Config } from "../config.js";
 import { KitlaneError, badRequest, forbidden, notFound } from "../errors.js";
 import { newId } from "../ids.js";
-import type { Actor, Entry, EntryKind, EntryMode, EntryWithNames, Lifecycle, User } from "../types.js";
+import type { Actor, Entry, EntryKind, EntryMode, EntryWithNames, Lifecycle, ThemeSetting, User } from "../types.js";
 import { audit } from "./audit.js";
 import { claimName } from "./names.js";
+import { isThemeSetting } from "./theme.js";
 
 const ENTRY_SELECT = `
   SELECT e.*,
@@ -52,6 +53,13 @@ function validatePurpose(purpose: string): string {
   return p;
 }
 
+/** The declared theme: one of the three settings, or null meaning "not declared" (the publish-time sniff applies). */
+export function validateTheme(theme: unknown): ThemeSetting | null {
+  if (theme === null) return null;
+  if (isThemeSetting(theme)) return theme;
+  throw badRequest('Theme must be "light", "dark", or "system"');
+}
+
 export interface CreateEntryInput {
   kind: EntryKind;
   mode: EntryMode;
@@ -63,6 +71,7 @@ export interface CreateEntryInput {
   repoUrl?: string | null;
   externalUrl?: string | null;
   copiedFrom?: { entryId: string; versionId: string } | null;
+  theme?: ThemeSetting | null;
 }
 
 export async function createEntry(q: Queryable, actor: Actor, creator: User, input: CreateEntryInput): Promise<EntryWithNames> {
@@ -71,9 +80,10 @@ export async function createEntry(q: Queryable, actor: Actor, creator: User, inp
   const id = newId(12);
   const externalUrl = input.externalUrl ? validateExternalUrl(input.externalUrl) : null;
   const repoUrl = input.repoUrl ? validateExternalUrl(input.repoUrl) : null;
+  const theme = input.theme === undefined ? null : validateTheme(input.theme);
   await q.query(
-    `INSERT INTO entries (id, kind, mode, title, purpose, tags, creator_id, owner_id, team, repo_url, external_url, copied_from_entry_id, copied_from_version_id)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $7, $8, $9, $10, $11, $12)`,
+    `INSERT INTO entries (id, kind, mode, title, purpose, tags, creator_id, owner_id, team, repo_url, external_url, copied_from_entry_id, copied_from_version_id, theme)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $7, $8, $9, $10, $11, $12, $13)`,
     [
       id,
       input.kind,
@@ -87,6 +97,7 @@ export async function createEntry(q: Queryable, actor: Actor, creator: User, inp
       externalUrl,
       input.copiedFrom?.entryId ?? null,
       input.copiedFrom?.versionId ?? null,
+      theme,
     ],
   );
   await q.query(`INSERT INTO maintainers (entry_id, user_id, added_by) VALUES ($1, $2, $2)`, [id, creator.id]);
@@ -195,6 +206,8 @@ export interface UpdateMetadataInput {
   team?: string | null;
   repoUrl?: string | null;
   externalUrl?: string | null;
+  /** null clears the declaration so the publish-time sniff applies again. */
+  theme?: ThemeSetting | null;
 }
 
 export async function updateMetadata(q: Queryable, actor: Actor, entry: Entry, input: UpdateMetadataInput): Promise<void> {
@@ -213,6 +226,7 @@ export async function updateMetadata(q: Queryable, actor: Actor, entry: Entry, i
     if (entry.mode !== "external") throw badRequest("Hosted tools do not have an external URL");
     push("external_url", input.externalUrl ? validateExternalUrl(input.externalUrl) : null);
   }
+  if (input.theme !== undefined) push("theme", validateTheme(input.theme));
   if (!sets.length) return;
   sets.push("updated_at = now()");
   await q.query(`UPDATE entries SET ${sets.join(", ")} WHERE id = $1`, params);

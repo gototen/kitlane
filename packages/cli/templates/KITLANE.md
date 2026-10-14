@@ -12,7 +12,7 @@ Kitlane gives an employee-made tool a memorable address (for example `kit/prep`)
 A tool is either a folder of static files hosted by Kitlane or an existing URL registered in the
 catalog. Hosted tools get identity, durable per-user storage, and company-readable shared
 collections through a small browser SDK. Metadata for this project lives in `kitlane.json`
-(`name`, `title`, `purpose`, `tags`, `deploy` folder or file, optional `repoUrl`).
+(`name`, `title`, `purpose`, `tags`, `deploy` folder or file, optional `repoUrl`, optional `theme`).
 
 ## Publishing contract
 
@@ -21,6 +21,15 @@ collections through a small browser SDK. Metadata for this project lives in `kit
 - No source bundle, repository, or prompt history is required. A repository link is optional.
 - Every publish creates an immutable version; one version is active. Maintainers can roll back.
 - Command: `kitlane publish [path] --name <name>`. The name is claimed on first publish.
+
+## Theme
+
+`theme` in `kitlane.json` is `"light"`, `"dark"`, or `"system"`. The Kitlane shell matches its
+Explore tools rail to the tool it frames, so a dark tool gets a dark rail. `"system"` means the
+tool adapts to the operating system, and the rail follows the person's own portal preference.
+Without the field, Kitlane reads the `<meta name="color-scheme">` tag from `index.html` at publish
+time (`dark`, `light`, or `light dark` for system) and, at runtime, the SDK reports the background
+colour the page actually rendered (`kitlane.shell.setTheme` sends it explicitly).
 
 ## Hosting constraints (read before building)
 
@@ -111,9 +120,10 @@ updates on their next fetch (`listIfChanged`, `onRefresh`).
 
 ## Adapting someone else's tool
 
-1. `kitlane pull <name>` (or **Make a copy** in the portal, then pull your copy).
+1. `kitlane remix <name> --name <yours>` (or **Remix** in the portal), then `kitlane pull <yours>`.
+   `kitlane copy` still works as an alias of `remix`.
 2. Edit the files with any agent or builder. Minified bundles are fine; infer from behaviour.
-3. `kitlane publish <dir> --name <your-name>`. Lineage credits the original creator.
+3. `kitlane publish <dir> --name <yours>`. Lineage credits the original creator.
 Backends not present in the files are not reproduced. Personal data is never copied.
 
 ## Identity
@@ -132,7 +142,7 @@ installation policy exposes them. Missing team data is a graceful fallback, not 
 ```
 kitlane login <portal>            kitlane publish ./dist --name prep       kitlane tool prep
 kitlane init                      kitlane register <url> --name docs       kitlane pull prep ./prep-copy
-kitlane tools --mine              kitlane rollback prep --version 3        kitlane copy prep --name prep-mine
+kitlane tools --mine              kitlane rollback prep --version 3        kitlane remix prep --name prep-mine
 kitlane collections list          kitlane collections grant <id> --user x  kitlane updaters create ...
 kitlane names add prep brief      kitlane lifecycle prep maintained        kitlane export -o catalog.json
 ```

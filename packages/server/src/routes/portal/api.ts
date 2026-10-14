@@ -33,6 +33,7 @@ function entryJson(config: any, e: entries.CreateEntryInput extends never ? neve
     frozen: e.frozen,
     featured: e.featured,
     copiedFrom: e.copied_from_entry_id ? { entryId: e.copied_from_entry_id, versionId: e.copied_from_version_id } : null,
+    theme: e.theme ?? null,
     createdAt: e.created_at,
     launchUrl: `${portalOrigin(config)}/${e.names[0]}`,
     ...(e.mode === "hosted" ? { origin: toolOrigin(config, e.id) } : {}),
@@ -119,6 +120,7 @@ export function apiApp(services: Services) {
         team: typeof b.team === "string" ? b.team : null,
         repoUrl: typeof b.repoUrl === "string" ? b.repoUrl : null,
         externalUrl: typeof b.externalUrl === "string" ? b.externalUrl : null,
+        ...(b.theme !== undefined ? { theme: b.theme } : {}),
       }),
     );
     return c.json({ tool: entryJson(config, entry) }, 201);
@@ -146,6 +148,8 @@ export function apiApp(services: Services) {
       ...(b.team !== undefined ? { team: b.team ? String(b.team) : null } : {}),
       ...(b.repoUrl !== undefined ? { repoUrl: b.repoUrl ? String(b.repoUrl) : null } : {}),
       ...(b.externalUrl !== undefined ? { externalUrl: String(b.externalUrl) } : {}),
+      // null clears the declaration; the service rejects anything but the three settings.
+      ...(b.theme !== undefined ? { theme: b.theme === null ? null : b.theme } : {}),
     });
     return c.json({ tool: entryJson(config, (await entries.getEntry(db, e.id))!) });
   });

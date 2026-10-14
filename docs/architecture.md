@@ -90,15 +90,15 @@ An external process calls `/.api/updater/collections/<id>/documents[...]` on the
 
 ## Data model
 
-Tables are created by `db/migrations.ts` (migration `001_init`).
+Tables are created by `db/migrations.ts` (migrations `001_init`, `002_team_lock`, `003_theme`).
 
 | Table | Purpose |
 |---|---|
-| `users` | Cached identity: opaque `id`, `external_id` (IdP subject), display name, optional email and team, `is_admin`, `is_dev_user` |
-| `entries` | Stable ID, `kind` (tool or resource), `mode` (hosted or external), title, purpose, tags (JSONB), creator, owner, team, lifecycle, repo URL, external URL, replacement, featured, frozen, copy lineage |
+| `users` | Cached identity: opaque `id`, `external_id` (IdP subject), display name, optional email and team, `is_admin`, `is_dev_user`; theme preferences `theme_pref` (portal) and `rail_pref` (shell rail) |
+| `entries` | Stable ID, `kind` (tool or resource), `mode` (hosted or external), title, purpose, tags (JSONB), creator, owner, team, lifecycle, repo URL, external URL, replacement, featured, frozen, copy lineage, declared `theme` |
 | `maintainers` | Entry and user associations; the owner is also a maintainer |
 | `names`, `name_history` | Current aliases (or administrator reservations) and their history, kept separate from deployment history |
-| `versions` | Immutable published-file references: number, creator, file count, bytes, content hash, manifest (paths, sizes, SHA-256, content types), copy source, removal state |
+| `versions` | Immutable published-file references: number, creator, file count, bytes, content hash, manifest (paths, sizes, SHA-256, content types), copy source, removal state, `detected_theme` sniffed at publish time |
 | `deployments`, `deployment_history` | One active version per hosted entry with a publication revision; publish, rollback, and copy events |
 | `audit_events` | Authorized changes and administrator actions, by identifier only |
 | `discovery_events` | Minimal measurement events with team snapshots |
@@ -109,6 +109,18 @@ Tables are created by `db/migrations.ts` (migration `001_init`).
 | `updater_credentials` | Hashed verifier, label, collection and operation scopes, expiry, revocation, last use |
 | `access_tokens` | CLI personal access tokens, hashed, with expiry and revocation |
 | `sessions` | Development portal sessions and tool-origin sessions, including pending one-time codes |
+
+## Theme resolution
+
+The portal (home, search, tool pages, administration) follows the person: the operating system by default, pinnable to light, dark, or system at `/.me` (`users.theme_pref`). The shell (the rail and drawer around a framed tool) matches the tool it frames, so the rail reads as part of the tool's window. `services/theme.ts` resolves it server-side; precedence, highest first:
+
+1. The person's rail preference (`users.rail_pref`) when forced to always light or always dark.
+2. `theme` declared in the tool's manifest (`kitlane.json`, stored in `entries.theme`): `light` or `dark`. `system` means the tool adapts to the OS, so resolution falls through to step 5 and the detected theme is ignored.
+3. The SDK's runtime report of the tool's actually rendered background, sent from inside the iframe as `postMessage({ type: "kitlane:theme", scheme: "light" | "dark" })` and applied client-side after load. The shell validates the sender's origin and window, and ignores the report when step 1 or 2 locked the theme (`themeLocked` in the shell config).
+4. The theme sniffed at publish time from the first `<meta name="color-scheme">` in `index.html` (`versions.detected_theme`): `dark` or `light` apply; `light dark`, `dark light`, or `normal` mean system and fall through; absent means unknown and falls through.
+5. The person's portal preference when it is light or dark; otherwise null, meaning follow the OS through the CSS media query.
+
+The shell page renders the resolved scheme as `data-theme` on `<html>` and passes `theme` and `themeLocked` in its JSON config. A remix (copy) carries the source's declared and detected theme because it serves the same files.
 
 ## Narrow interfaces
 

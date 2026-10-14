@@ -3,5 +3,6 @@
   "title": "Briefs editor",
   "purpose": "Edit the shared company briefs that kit/prep reads.",
   "tags": ["research", "editing"],
+  "theme": "system",
   "deploy": "./index.html"
 }

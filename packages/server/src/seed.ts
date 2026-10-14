@@ -47,8 +47,8 @@ export async function runSeed(db: Db, config: Config): Promise<void> {
     return;
   }
 
-  async function publish(user: any, name: string, title: string, purpose: string, tags: string[], dir: string, note: string) {
-    const entry = await db.transaction((tx) => entries.createEntry(tx, userActor(user.id), user, { kind: "tool", mode: "hosted", name, title, purpose, tags }));
+  async function publish(user: any, name: string, title: string, purpose: string, tags: string[], dir: string, note: string, theme: "light" | "dark" | "system") {
+    const entry = await db.transaction((tx) => entries.createEntry(tx, userActor(user.id), user, { kind: "tool", mode: "hosted", name, title, purpose, tags, theme }));
     const target = path.join(root, dir);
     if (!fs.existsSync(target)) throw new Error(`Example not found: ${target}. Run npm run build first.`);
     const body = await packForUpload(target);
@@ -58,7 +58,7 @@ export async function runSeed(db: Db, config: Config): Promise<void> {
   }
 
   // 1. prep: reads the shared company-briefs collection; personal notes per company.
-  const prep = await publish(aliceUser, "prep", "Pre-call brief", "Turn public company facts into a one-page brief before a call.", ["meetings", "research", "sales"], "prep", "Initial seed release");
+  const prep = await publish(aliceUser, "prep", "Pre-call brief", "Turn public company facts into a one-page brief before a call.", ["meetings", "research", "sales"], "prep", "Initial seed release", "system");
   await entries.setLifecycle(db, userActor(alice.id), prep, "maintained");
   const briefs = await db.transaction((tx) => docs.createCollection(tx, userActor(alice.id), config.installationId, prep, aliceUser, "company-briefs", "Public, synthetic company briefs refreshed by a separate updater process."));
 
@@ -70,19 +70,19 @@ export async function runSeed(db: Db, config: Config): Promise<void> {
 
   // 2. briefs-editor: a separate editing tool, granted writer context; Carol is a writer.
   const carolUser = (await db.query(`SELECT * FROM users WHERE id = $1`, [carol.id])).rows[0];
-  const editor = await publish(carolUser, "briefs-editor", "Briefs editor", "Edit the shared company briefs that kit/prep reads.", ["research", "editing"], "briefs-editor", "Initial seed release");
+  const editor = await publish(carolUser, "briefs-editor", "Briefs editor", "Edit the shared company briefs that kit/prep reads.", ["research", "editing"], "briefs-editor", "Initial seed release", "system");
   await docs.bindCollection(db, userActor(carol.id), editor, "company-briefs", briefs.id);
   await docs.addGrant(db, userActor(alice.id), briefs, "tool", editor.id);
   await docs.addGrant(db, userActor(alice.id), briefs, "user", carol.id);
 
   // 3. focus: personal state only.
   const bobUser = (await db.query(`SELECT * FROM users WHERE id = $1`, [bob.id])).rows[0];
-  const focus = await publish(bobUser, "focus", "Focus timer", "A focus timer that remembers your preferences and logs sessions.", ["productivity", "wellbeing"], "focus", "Initial seed release");
+  const focus = await publish(bobUser, "focus", "Focus timer", "A focus timer that remembers your preferences and logs sessions.", ["productivity", "wellbeing"], "focus", "Initial seed release", "dark");
   await entries.setLifecycle(db, userActor(bob.id), focus, "maintained");
 
   // 4. meet: minified Preact bundle, for adaptation testing.
   const daveUser = (await db.query(`SELECT * FROM users WHERE id = $1`, [dave.id])).rows[0];
-  await publish(daveUser, "meet", "Meeting time finder", "Find a meeting time that works across time zones; saves your favourite cities.", ["meetings", "timezones", "productivity"], "tz-minified/dist", "Minified bundle (Preact + esbuild)");
+  await publish(daveUser, "meet", "Meeting time finder", "Find a meeting time that works across time zones; saves your favourite cities.", ["meetings", "timezones", "productivity"], "tz-minified/dist", "Minified bundle (Preact + esbuild)", "system");
 
   // 5. External entries.
   await db.transaction((tx) => entries.createEntry(tx, userActor(bob.id), bobUser, { kind: "resource", mode: "external", name: "teamdocs", title: "Team docs", purpose: "Where the marketing team keeps its working documents.", tags: ["docs"], externalUrl: "https://example.com/teamdocs" }));

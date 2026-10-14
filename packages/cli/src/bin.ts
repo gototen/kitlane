@@ -11,7 +11,7 @@ import { register } from "./commands/register.js";
 import { search, tool, tools } from "./commands/tools.js";
 import { rollback } from "./commands/rollback.js";
 import { pull } from "./commands/pull.js";
-import { copy } from "./commands/copy.js";
+import { copy, remix } from "./commands/copy.js";
 import { names } from "./commands/names.js";
 import { lifecycle } from "./commands/lifecycle.js";
 import { collections } from "./commands/collections.js";
@@ -24,7 +24,7 @@ const VERSION: string = require("../package.json").version;
 const GROUPS: { title: string; commands: Command[] }[] = [
   { title: "Account", commands: [login, logout, whoami] },
   { title: "Publish", commands: [init, publish, register, rollback, names, lifecycle] },
-  { title: "Discover and adapt", commands: [tools, tool, search, pull, copy] },
+  { title: "Discover and adapt", commands: [tools, tool, search, pull, remix, copy] },
   { title: "Data", commands: [collections, updaters, exportCmd] },
 ];
 

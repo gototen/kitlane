@@ -2,7 +2,7 @@ import { raw } from "hono/html";
 import type { Config } from "../config.js";
 import { portalOrigin, toolOrigin } from "../config.js";
 import type { EntryWithNames } from "../types.js";
-import { safeJson } from "./layout.js";
+import { Mark, safeJson } from "./layout.js";
 
 export interface ShellData {
   entry: EntryWithNames;
@@ -11,11 +11,17 @@ export interface ShellData {
   maintainers: string[];
   replacement: EntryWithNames | null;
   userName: string;
+  /** Resolved shell theme: the tool's declared or detected scheme, else the person's preference, else null (follow the OS). */
+  theme: "light" | "dark" | null;
+  themeSource: string;
+  /** When true the runtime report from the tool must not override the theme (a forced rail preference or a declared theme). */
+  themeLocked: boolean;
 }
 
 /**
  * The shell: a cross-origin iframe for the hosted tool plus the persistent "Explore tools" rail.
- * The rail belongs to the shell; the tool's HTML is never rewritten.
+ * The rail belongs to the shell; the tool's HTML is never rewritten. The rail matches the tool's
+ * theme so it reads as part of the tool's window rather than as a frame around it.
  */
 export function shellPage(config: Config, d: ShellData) {
   const { entry } = d;
@@ -29,9 +35,11 @@ export function shellPage(config: Config, d: ShellData) {
     drawerUrl: `/.api/shell/${entry.id}/drawer`,
     discoveryUrl: `/.api/discovery`,
     shortcut: config.shortcut,
+    theme: d.theme,
+    themeLocked: d.themeLocked,
   };
   return (
-    <html lang="en" class="kl-shell-root">
+    <html lang="en" class="kl-shell-root" data-theme={d.theme ?? undefined} data-theme-source={d.themeSource}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -84,18 +92,16 @@ export function shellPage(config: Config, d: ShellData) {
           aria-expanded="false"
           aria-label="Explore tools: see what else your colleagues have made"
         >
-          <span class="kl-rail-icon" aria-hidden="true">
-            ✦
-          </span>
+          <Mark size={20} />
           <span class="kl-rail-label">Explore tools</span>
         </button>
         <aside id="kl-drawer" class="kl-drawer" aria-label="Explore tools" aria-hidden="true" hidden>
           <div class="kl-drawer-head">
-            <span class="kl-drawer-brand">
-              Kitlane · {config.shortcut}/{entry.names[0]}
-            </span>
+            <span class="kl-drawer-brand">Explore tools</span>
             <button id="kl-drawer-close" class="kl-drawer-close" type="button" aria-label="Close explore tools">
-              ×
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18"></path>
+              </svg>
             </button>
           </div>
           <div id="kl-drawer-body" class="kl-drawer-body" aria-live="polite">

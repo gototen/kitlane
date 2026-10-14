@@ -246,4 +246,15 @@ CREATE INDEX sessions_expires_idx ON sessions(expires_at);
 ALTER TABLE users ADD COLUMN team_locked BOOLEAN NOT NULL DEFAULT FALSE;
 `,
   },
+  {
+    // Theme plumbing: a tool's declared theme, the theme sniffed from index.html at publish time,
+    // and each person's portal and rail preferences. See docs/architecture.md, "Theme resolution".
+    name: "003_theme",
+    sql: `
+ALTER TABLE entries ADD COLUMN theme TEXT CHECK (theme IN ('light','dark','system'));
+ALTER TABLE versions ADD COLUMN detected_theme TEXT CHECK (detected_theme IN ('light','dark','system'));
+ALTER TABLE users ADD COLUMN theme_pref TEXT NOT NULL DEFAULT 'system' CHECK (theme_pref IN ('light','dark','system'));
+ALTER TABLE users ADD COLUMN rail_pref TEXT NOT NULL DEFAULT 'tool' CHECK (rail_pref IN ('tool','light','dark'));
+`,
+  },
 ];

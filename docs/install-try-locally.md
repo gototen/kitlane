@@ -34,7 +34,7 @@ The seed script publishes `kit/prep`, `kit/briefs-editor`, `kit/focus`, `kit/mee
 ### Seeing the loop
 
 1. Sign in as **Bob**. Open <http://kit.localhost:3000/prep>. The first launch performs one sign-in round trip to the tool's own origin and returns to the shell. Pick a company; the brief renders and the tab title updates.
-2. Click the **Explore tools** handle on the right. The drawer shows "This tool" (creator, maintainer, lifecycle, Details, Make a copy, Open directly) and cards such as `kit/meet` ("Also about meetings") from other creators. Press Escape to close it; focus returns to the handle.
+2. Click the **Explore tools** handle on the right. The drawer shows "This tool" (who made it, Open in portal, Remix, Open without the rail) and "Also on the shelf": numbered rows such as `kit/meet` with the reason it appears ("Also about meetings"). Press Escape to close it; focus returns to the handle.
 3. Launch `kit/meet` from a card. That is a recorded discovery. Save a favourite set of cities; it is stored in personal storage for Bob and this tool only.
 4. Open `kit/prep` again and type a note for a company. Sign out (Switch user), sign in as **Alice**, open the same company: Alice does not see Bob's note. Personal data is isolated by user.
 5. Sign in as **Bob** and open `kit/briefs-editor`. It shows the missing-capability message: the editor tool is an allowed writer context, but Bob is not a granted writer. Sign in as **Carol** (granted writer) or **Alice** (collection owner): either can edit, and `kit/prep` readers see the change on their next fetch. A writer needs both a user grant and an allowed tool context; the seed grants the editor tool and Carol.
@@ -46,7 +46,7 @@ The seed script publishes `kit/prep`, `kit/briefs-editor`, `kit/focus`, `kit/mee
    ```
 
    Return to `kit/prep`; within a minute, or on refocus, the briefs show the refreshed news line.
-7. On `kit/meet`'s detail page, choose **Make a copy**, give it a name, then `npx kitlane pull <copy-name> ./meet-copy` and change something using only the three downloaded files. Republish with `npx kitlane publish ./meet-copy --name <copy-name>`. See [adaptation.md](adaptation.md).
+7. On `kit/meet`'s detail page, choose **Remix**, give it a name, then `npx kitlane pull <remix-name> ./meet-copy` and change something using only the three downloaded files. Republish with `npx kitlane publish ./meet-copy --name <remix-name>`. See [adaptation.md](adaptation.md).
 8. As Alice (administrator), open a tool's detail page and **Freeze** it. Its short link, direct origin, assets, and SDK routes stop serving. **Unfreeze** restores them. The admin page also has the measurement report.
 
 ### CLI against the local server

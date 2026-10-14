@@ -347,7 +347,11 @@ describe("export", () => {
     const data = JSON.parse(text);
     expect(data.sharedCollections.length).toBeGreaterThan(0);
     expect(data.sharedDocuments.length).toBeGreaterThan(0);
-    expect(text).not.toContain('"theme"');
+    // The personal document written earlier in this file ends as { theme: "green" }; entries carry a declared
+    // theme column of their own, so the personal payload value is the marker for "personal data excluded".
+    expect(text).not.toContain('"theme":"green"');
+    expect(data).not.toHaveProperty("personalDocuments");
+    expect(data.excludes).toContain("personal_documents");
     expect(text).not.toContain("klu_");
     expect(text).not.toContain("klp_");
     expect(text).not.toContain("kls_");

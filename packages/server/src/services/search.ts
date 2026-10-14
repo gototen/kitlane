@@ -81,14 +81,15 @@ export async function searchEntries(q: Queryable, opts: SearchOptions): Promise<
 export interface Recommendation {
   entry: EntryWithNames;
   reason: string;
-  reasonKey: "shared_tag" | "same_creator" | "recent" | "featured";
+  reasonKey: "shared_tag" | "same_creator" | "recent" | "featured" | "remix_of_this" | "original_of_this";
   score: number;
 }
 
 /**
- * Drawer recommendations. Explainable signals only: shared purpose tags, same creator, recent
- * additions, and a small curated (featured) set. At least one card from a different creator or team
- * is surfaced when one exists.
+ * Drawer recommendations. Explainable signals only: remix lineage with the current tool, shared
+ * purpose tags, same creator, recent additions, and a small curated (featured) set. At least one row
+ * from a different creator or team is surfaced when one exists. Every reason is written as a sentence
+ * a colleague could have said.
  */
 export async function recommendFor(q: Queryable, current: EntryWithNames, limit = 5): Promise<Recommendation[]> {
   const r = await q.query<EntryWithNames>(
@@ -101,9 +102,10 @@ export async function recommendFor(q: Queryable, current: EntryWithNames, limit 
   const twoWeeksAgo = Date.now() - 14 * 86400_000;
   const scored: Recommendation[] = r.rows.map((e) => {
     const shared = e.tags.filter((t) => currentTags.has(t));
+    const isNew = new Date(e.created_at).getTime() > twoWeeksAgo;
     let score = 0;
     let reasonKey: Recommendation["reasonKey"] = "recent";
-    let reason = "Recently added";
+    let reason = isNew ? "New on the shelf" : "Also on the shelf";
     if (shared.length) {
       score += 3 * shared.length;
       reasonKey = "shared_tag";
@@ -113,19 +115,26 @@ export async function recommendFor(q: Queryable, current: EntryWithNames, limit 
       score += 1;
       if (!shared.length) {
         reasonKey = "same_creator";
-        reason = `Also by ${e.creator_name}`;
+        reason = `${e.creator_name} made this too`;
       }
     }
     if (e.featured) {
       score += 2;
       if (!shared.length && e.creator_id !== current.creator_id) {
         reasonKey = "featured";
-        reason = "Featured by your installation";
+        reason = "Featured here";
       }
     }
-    if (new Date(e.created_at).getTime() > twoWeeksAgo) {
-      score += 1;
+    if (e.copied_from_entry_id === current.id) {
+      score += 4;
+      reasonKey = "remix_of_this";
+      reason = `${e.creator_name} remixed this tool`;
+    } else if (current.copied_from_entry_id === e.id) {
+      score += 4;
+      reasonKey = "original_of_this";
+      reason = `The original this tool was remixed from`;
     }
+    if (isNew) score += 1;
     if (e.lifecycle === "maintained") score += 0.5;
     return { entry: e, reason, reasonKey, score };
   });

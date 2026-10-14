@@ -9,7 +9,7 @@ import type { Actor, Deployment, Entry, EntryWithNames, User, Version } from "..
 import { audit } from "./audit.js";
 import { createEntry, getEntry } from "./entries.js";
 import type { ArtifactStorage } from "./storage.js";
-import { extractUploadToStaging, manifestHash } from "./upload.js";
+import { extractUploadToStaging, manifestHash, sniffStagedTheme } from "./upload.js";
 import { copyBindingsAsReadReferences } from "./documents.js";
 
 export async function getDeployment(q: Queryable, entryId: string): Promise<Deployment | null> {
@@ -96,15 +96,17 @@ export async function publishUpload(
     await storage.discardStaging(staging);
     return { version: active, unchanged: true, activated: false };
   }
+  // Sniff the theme while the files are still in staging; the shell uses it when nothing is declared.
+  const detectedTheme = await sniffStagedTheme(staging, staged.entry);
   const versionId = newId(12);
   await storage.commitRelease(entry.id, versionId, staging);
   try {
     const version = await db.transaction(async (tx) => {
       const num = await tx.query<{ n: number }>(`SELECT COALESCE(max(number), 0)::int + 1 AS n FROM versions WHERE entry_id = $1`, [entry.id]);
       const r = await tx.query<Version>(
-        `INSERT INTO versions (id, entry_id, number, created_by, file_count, total_bytes, content_hash, manifest, note)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9) RETURNING *`,
-        [versionId, entry.id, num.rows[0].n, actor.id, staged.files.length, staged.totalBytes, hash, JSON.stringify({ files: staged.files, entry: staged.entry }), opts.note ?? null],
+        `INSERT INTO versions (id, entry_id, number, created_by, file_count, total_bytes, content_hash, manifest, note, detected_theme)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10) RETURNING *`,
+        [versionId, entry.id, num.rows[0].n, actor.id, staged.files.length, staged.totalBytes, hash, JSON.stringify({ files: staged.files, entry: staged.entry }), opts.note ?? null, detectedTheme],
       );
       const version = r.rows[0];
       if (opts.activate !== false) {
@@ -180,10 +182,12 @@ export async function copyTool(
         purpose: input.purpose ?? source.purpose,
         tags: source.tags,
         copiedFrom: { entryId: source.id, versionId: sourceVersion.id },
+        // The same files render in the same scheme, so the declared theme travels with the remix.
+        theme: source.theme ?? null,
       });
       await tx.query(
-        `INSERT INTO versions (id, entry_id, number, created_by, file_count, total_bytes, content_hash, manifest, note, source_entry_id, source_version_id)
-         VALUES ($1, $2, 1, $3, $4, $5, $6, $7::jsonb, $8, $9, $10)`,
+        `INSERT INTO versions (id, entry_id, number, created_by, file_count, total_bytes, content_hash, manifest, note, source_entry_id, source_version_id, detected_theme)
+         VALUES ($1, $2, 1, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11)`,
         [
           newVersionId,
           entry.id,
@@ -195,6 +199,7 @@ export async function copyTool(
           `Copied from ${source.names[0] ?? source.id} v${sourceVersion.number}`,
           source.id,
           sourceVersion.id,
+          sourceVersion.detected_theme ?? null,
         ],
       );
       await activateVersionInTx(tx, actor, entry.id, newVersionId, "copy");

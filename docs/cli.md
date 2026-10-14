@@ -25,7 +25,8 @@ Discover and adapt:
   tool         Show one tool: addresses, versions, bindings, maintainers
   search       Search the catalog
   pull         Download a tool's published files for adaptation
-  copy         Make a copy: duplicate a tool's published files into a new tool you own
+  remix        Remix: duplicate a tool's published files into a new tool you own (the original maker stays credited)
+  copy         Alias of remix
 
 Data:
   collections  Manage shared collections, bindings, and writer grants
@@ -62,7 +63,7 @@ Resolution order for the portal: `--portal`, then `KITLANE_URL`, then the stored
 `kitlane init [dir]` writes:
 
 - `KITLANE.md`: platform guidance for people and coding agents (publishing contract, hosting constraints, SDK, storage modes, grants, updaters, adaptation, identity, what is not available, a cheat sheet). The content sits between `<!-- kitlane:start -->` and `<!-- kitlane:end -->`; re-running `init` refreshes only that section and leaves your notes alone.
-- `kitlane.json` (if missing): `{ "name", "title", "purpose", "tags", "deploy", "repoUrl" }`. `deploy` is detected: `./dist`, `./build`, `./public`, or `./out` containing `index.html`, else a root `index.html`, else `./dist`.
+- `kitlane.json` (if missing): `{ "name", "title", "purpose", "tags", "theme", "deploy", "repoUrl" }`. `deploy` is detected: `./dist`, `./build`, `./public`, or `./out` containing `index.html`, else a root `index.html`, else `./dist`. `theme` is `"light"`, `"dark"`, or `"system"` (the template's default): the shell matches its Explore tools rail to the tool, `"system"` means the tool adapts to the OS, and without the field Kitlane reads the `<meta name="color-scheme">` tag from `index.html` at publish time.
 - If `AGENTS.md` or `CLAUDE.md` exist, a bounded pointer section is inserted or updated between the same markers: "This project publishes to Kitlane. Read KITLANE.md for ...". Existing files are never replaced or symlinked; if neither exists, nothing is created.
 
 `.kitlaneignore` (optional, next to the deploy folder) uses gitignore-like patterns: `*` within a segment, `**` across segments, a trailing `/` for directories, a leading `/` to anchor at the root, `#` comments.
@@ -76,7 +77,8 @@ kitlane publish [path] [--name <name>] [--title <t>] [--purpose <p>] [--tags a,b
 - `path` defaults to `deploy` in `kitlane.json`; `--name` defaults to `name` there.
 - A single `.html` file is packaged as `index.html`. A folder must contain `index.html` at its root.
 - Always excluded: `.git/`, `node_modules/`, `.env*`, `.DS_Store`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `.npmrc`, `.netrc`, `id_rsa*`, `.kitlaneignore` itself. Symbolic links are skipped with a warning.
-- If the name is not yet claimed, the CLI claims it with the title, purpose, and tags from flags or `kitlane.json` and prints `Claimed kit/<name>`. Publishing to an external entry is refused.
+- If the name is not yet claimed, the CLI claims it with the title, purpose, tags, and theme from flags or `kitlane.json` and prints `Claimed kit/<name>`. Publishing to an external entry is refused.
+- When `theme` is set in `kitlane.json` and differs from the catalog, the CLI updates it before uploading and prints `Theme: dark (from kitlane.json)`. Any value other than `light`, `dark`, or `system` fails before anything is uploaded.
 - An upload identical to the active version is reported as unchanged and creates no version.
 - `--no-activate` uploads a version without making it active; activate it later with `rollback --version <n>`.
 
@@ -97,10 +99,11 @@ kitlane tools [--mine] [-q <query>]
 kitlane tool <name|id>
 kitlane search <query>
 kitlane pull <tool> [dir] [--version <id>] [--force]
-kitlane copy <tool> --name <new-name> [--title <t>]
+kitlane remix <tool> --name <new-name> [--title <t>]
+kitlane copy <tool> --name <new-name> [--title <t>]      # alias of remix
 ```
 
-`pull` downloads the active (or given) version as tar.gz and extracts it into `dir` (default `./<name>`), validating every entry: no absolute paths, no `..`, no backslashes or control characters, regular files only (symlinks and links are refused), and it will not overwrite a non-empty directory without `--force`. `copy` creates a new tool you own from the active version, with lineage recorded; it does not download anything.
+`pull` downloads the active (or given) version as tar.gz and extracts it into `dir` (default `./<name>`), validating every entry: no absolute paths, no `..`, no backslashes or control characters, regular files only (symlinks and links are refused), and it will not overwrite a non-empty directory without `--force`. `remix` creates a new tool you own from the active version, with lineage recorded and the original maker credited; it does not download anything, and it carries the source's declared theme. `copy` is an alias kept for existing scripts; the API route stays `POST /.api/cli/tools/<id>/copy`.
 
 ## Data
 

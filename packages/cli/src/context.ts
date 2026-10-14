@@ -48,6 +48,8 @@ export function clientFor(ctx: Ctx, opts: { requireToken?: boolean } = {}): Clie
   return createClient(creds.portal, creds.token);
 }
 
+export type ThemeSetting = "light" | "dark" | "system";
+
 export interface KitlaneJson {
   name?: string;
   title?: string;
@@ -56,6 +58,16 @@ export interface KitlaneJson {
   deploy?: string;
   repoUrl?: string;
   team?: string;
+  /** The scheme the tool renders in, or "system" when it adapts to the OS; the shell matches its rail to it. */
+  theme?: ThemeSetting;
+}
+
+/** The validated optional theme from kitlane.json; an empty value means "not declared". */
+export function themeOf(meta: KitlaneJson | null): ThemeSetting | undefined {
+  const value = meta?.theme as unknown;
+  if (value === undefined || value === null || value === "") return undefined;
+  if (value === "light" || value === "dark" || value === "system") return value;
+  throw new Error(`kitlane.json: "theme" must be "light", "dark", or "system" (got ${JSON.stringify(value)}).`);
 }
 
 export function readKitlaneJson(dir: string): KitlaneJson | null {

@@ -3,6 +3,7 @@
   "title": "",
   "purpose": "",
   "tags": [],
+  "theme": "system",
   "deploy": "./dist",
   "repoUrl": ""
 }

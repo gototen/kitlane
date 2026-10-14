@@ -50,7 +50,8 @@ export const tool: Command = {
     println(`  maintainers: ${info.maintainers.map((m: any) => m.name + (m.owner ? " (owner)" : "")).join(", ")}`);
     println(`  lifecycle:  ${t.lifecycle}${t.frozen ? "  FROZEN" : ""}${t.featured ? "  featured" : ""}`);
     if (t.repoUrl) println(`  repository: ${t.repoUrl}`);
-    if (t.copiedFrom) println(`  copied from: tool ${t.copiedFrom.entryId} version ${t.copiedFrom.versionId}`);
+    if (t.theme) println(`  theme:      ${t.theme}`);
+    if (t.copiedFrom) println(`  remixed from: tool ${t.copiedFrom.entryId} version ${t.copiedFrom.versionId}`);
     if (t.mode === "hosted") {
       println("");
       if (!info.versions.length) println("  No versions published yet.");

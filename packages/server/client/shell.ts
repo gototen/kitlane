@@ -9,12 +9,20 @@ interface ShellConfig {
   drawerUrl: string;
   discoveryUrl: string;
   shortcut: string;
+  /** Server-resolved rail theme, or null to follow the OS. */
+  theme: "light" | "dark" | null;
+  /** When true, the tool's runtime report (kitlane:theme) must not change the theme. */
+  themeLocked: boolean;
 }
 
 (() => {
   const cfgEl = document.getElementById("kl-shell-config");
   if (!cfgEl) return;
   const cfg: ShellConfig = JSON.parse(cfgEl.textContent || "{}");
+  // The server already renders data-theme on <html>; this guard keeps the two in step.
+  if ((cfg.theme === "light" || cfg.theme === "dark") && document.documentElement.dataset.theme !== cfg.theme) {
+    document.documentElement.dataset.theme = cfg.theme;
+  }
   const frame = document.getElementById("kl-tool-frame") as HTMLIFrameElement | null;
   const handle = document.getElementById("kl-rail-handle") as HTMLButtonElement | null;
   const drawer = document.getElementById("kl-drawer") as HTMLElement | null;
@@ -73,6 +81,9 @@ interface ShellConfig {
       } catch {
         // ignore
       }
+    } else if (data.type === "kitlane:theme" && (data.scheme === "light" || data.scheme === "dark") && !cfg.themeLocked) {
+      // The tool reports the scheme it actually rendered; the rail follows unless the theme is locked.
+      document.documentElement.dataset.theme = data.scheme;
     }
   });
   frame.addEventListener("load", () => {
