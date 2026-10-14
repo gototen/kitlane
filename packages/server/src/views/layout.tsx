@@ -46,8 +46,13 @@ export function portalThemeOf(user: User | null | undefined): "light" | "dark" |
   return pref === "light" || pref === "dark" ? pref : null;
 }
 
+/** Every server-rendered page starts with this so browsers use standards mode, not quirks mode. */
+export const DOCTYPE = raw("<!doctype html>");
+
 export const Layout: FC<PropsWithChildren<LayoutProps>> = ({ config, title, user, wide, bodyClass, head, nav, children }) => (
-  <html lang="en" data-theme={portalThemeOf(user) ?? undefined}>
+  <>
+    {DOCTYPE}
+    <html lang="en" data-theme={portalThemeOf(user) ?? undefined}>
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -120,7 +125,8 @@ export const Layout: FC<PropsWithChildren<LayoutProps>> = ({ config, title, user
       </footer>
       <script src="/.static/portal.js" defer></script>
     </body>
-  </html>
+    </html>
+  </>
 );
 
 export const JsonScript: FC<{ id: string; value: unknown }> = ({ id, value }) => (

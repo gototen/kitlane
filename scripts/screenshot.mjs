@@ -1,5 +1,5 @@
 // Headless-Chrome screenshots of a Kitlane server through the DevTools protocol, for the README images.
-// Usage: node scripts/screenshot.mjs <out.jpg> <url> [--width 1400] [--height 868] [--scheme light|dark] [--open-drawer] [--wait ms] [--cookie name=value]
+// Usage: node scripts/screenshot.mjs <out.jpg> <url> [--width 1400] [--height 868] [--scheme light|dark] [--open-drawer] [--wait ms] [--cookie name=value] [--eval <js>]
 // CHROME=/path/to/chrome overrides the binary. Get a session cookie from the dev login form (see CONTRIBUTING.md).
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -17,6 +17,7 @@ const scheme = opt("--scheme", null);
 const openDrawer = args.includes("--open-drawer");
 const settle = Number(opt("--wait", "2500"));
 const cookie = opt("--cookie", null);
+const evalExpr = opt("--eval", null);
 const port = 9333 + Math.floor(Math.random() * 100);
 const profile = `/tmp/kl-shot-profile-${port}`;
 
@@ -89,6 +90,10 @@ while (Date.now() < deadline) {
 if (openDrawer) {
   await send("Runtime.evaluate", { expression: "document.getElementById('kl-rail-handle')?.click(); 'ok'" });
   await sleep(1200);
+}
+if (evalExpr) {
+  const r = await send("Runtime.evaluate", { expression: evalExpr, returnByValue: true });
+  console.log("eval:", JSON.stringify(r.result.value));
 }
 const shot = await send("Page.captureScreenshot", { format: "jpeg", quality: 88 });
 fs.writeFileSync(out, Buffer.from(shot.data, "base64"));

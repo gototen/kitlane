@@ -2,7 +2,7 @@ import { raw } from "hono/html";
 import type { Config } from "../config.js";
 import { portalOrigin } from "../config.js";
 import type { Entry, User } from "../types.js";
-import { Layout, safeJson } from "./layout.js";
+import { DOCTYPE, Layout, safeJson } from "./layout.js";
 
 export function errorPage(config: Config, status: number, message: string) {
   return (
@@ -31,7 +31,9 @@ const SLOT_CSS = `body{font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-ser
 export function bootstrapAuthPage(config: Config, entry: Entry, startUrl: string, note?: string) {
   const payload = safeJson({ type: "kitlane:needs-auth", tool: entry.id, start: startUrl });
   return (
-    <html lang="en">
+    <>
+      {DOCTYPE}
+      <html lang="en">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -48,13 +50,16 @@ export function bootstrapAuthPage(config: Config, entry: Entry, startUrl: string
         </div>
         <script>{raw(`(function(){try{if(window.parent&&window.parent!==window){window.parent.postMessage(${payload},${safeJson(portalOrigin(config))});}}catch(e){}})();`)}</script>
       </body>
-    </html>
+      </html>
+    </>
   );
 }
 
 export function frozenPage(config: Config, entry: Entry, message?: string) {
   return (
-    <html lang="en">
+    <>
+      {DOCTYPE}
+      <html lang="en">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -73,7 +78,8 @@ export function frozenPage(config: Config, entry: Entry, message?: string) {
           </p>
         </div>
       </body>
-    </html>
+      </html>
+    </>
   );
 }
 

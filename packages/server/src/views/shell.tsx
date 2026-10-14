@@ -2,7 +2,7 @@ import { raw } from "hono/html";
 import type { Config } from "../config.js";
 import { portalOrigin, toolOrigin } from "../config.js";
 import type { EntryWithNames } from "../types.js";
-import { Mark, safeJson } from "./layout.js";
+import { DOCTYPE, Mark, safeJson } from "./layout.js";
 
 export interface ShellData {
   entry: EntryWithNames;
@@ -39,7 +39,9 @@ export function shellPage(config: Config, d: ShellData) {
     themeLocked: d.themeLocked,
   };
   return (
-    <html lang="en" class="kl-shell-root" data-theme={d.theme ?? undefined} data-theme-source={d.themeSource}>
+    <>
+      {DOCTYPE}
+      <html lang="en" class="kl-shell-root" data-theme={d.theme ?? undefined} data-theme-source={d.themeSource}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -110,6 +112,7 @@ export function shellPage(config: Config, d: ShellData) {
         </aside>
         <script src="/.static/shell.js" defer></script>
       </body>
-    </html>
+      </html>
+    </>
   );
 }
