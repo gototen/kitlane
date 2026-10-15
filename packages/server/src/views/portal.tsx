@@ -38,8 +38,9 @@ const Tags: FC<{ tags: string[] }> = ({ tags }) =>
 
 /**
  * One tool in a ruled list: index, title, a reason or purpose, and who made it. Used on Today,
- * in search results, on the person's own page, and in the drawer. The title carries the discovery
- * attributes the shell client reads when a row is launched from the rail.
+ * in search results, on the person's own page, and in the drawer. The title opens the tool, because
+ * using tools is what most people come for; a quiet Details link beside it leads to the tool page.
+ * The title carries the discovery attributes the shell client reads when a row is launched from the rail.
  */
 export const ToolRow: FC<{
   entry: EntryWithNames;
@@ -51,14 +52,14 @@ export const ToolRow: FC<{
   source?: string;
   titleHref?: string;
   target?: string;
-  action?: "open" | "none";
+  action?: "details" | "none";
   quietIndex?: boolean;
-}> = ({ entry, config, index, reason, reasonKey, placement, source, titleHref, target, action = "open", quietIndex }) => (
+}> = ({ entry, config, index, reason, reasonKey, placement, source, titleHref, target, action = "details", quietIndex }) => (
   <div class={`trow ${entry.kind === "resource" ? "resource" : "tool"}`}>
     <span class={quietIndex ? "idx quiet" : "idx"}>{pad(index)}</span>
     <div>
       {reason ? <p class="reason">{reason}</p> : null}
-      <a class="t" href={titleHref ?? `/.tool/${entry.id}`} data-kl-target={entry.id} data-kl-placement={placement} data-kl-reason={reasonKey} data-kl-source={source} target={target}>
+      <a class="t" href={titleHref ?? (entry.frozen ? `/.tool/${entry.id}` : launchOf(entry))} data-kl-target={entry.id} data-kl-placement={placement} data-kl-reason={reasonKey} data-kl-source={source} target={target}>
         {entry.title}
       </a>
       {entry.purpose ? <p class="p">{entry.purpose}</p> : null}
@@ -77,15 +78,11 @@ export const ToolRow: FC<{
         {entry.frozen ? <span class="badge frozen"> · frozen</span> : null}
       </div>
     </div>
-    {action === "open" ? (
+    {action === "details" ? (
       <div class="actions">
-        {entry.frozen ? (
-          <span class="by">frozen</span>
-        ) : (
-          <a class="tlink" href={launchOf(entry)} data-kl-target={entry.id} data-kl-placement={placement} data-kl-reason={reasonKey} data-kl-source={source} target={target}>
-            {entry.kind === "resource" ? "Go" : "Open"}
-          </a>
-        )}
+        <a class="tlink quiet" href={`/.tool/${entry.id}`}>
+          Details
+        </a>
       </div>
     ) : null}
   </div>
@@ -141,12 +138,15 @@ export function homePage(config: Config, user: User, today: TodayData, canPublis
             <article class="lead">
               <span class="idx">01 · {lead.label}</span>
               <h2>
-                <a href={`/.tool/${lead.entry.id}`}>{lead.entry.title}</a>
+                <a href={launchOf(lead.entry)}>{lead.entry.title}</a>
               </h2>
               {lead.deck ? <p class="deck">{lead.deck}</p> : null}
               <div class="lead-actions">
                 <a class="btn primary" href={launchOf(lead.entry)}>
                   Open {lead.entry.title}
+                </a>
+                <a class="tlink quiet" href={`/.tool/${lead.entry.id}`}>
+                  Details
                 </a>
                 <span class="by">{lead.byline}</span>
               </div>
@@ -161,12 +161,12 @@ export function homePage(config: Config, user: User, today: TodayData, canPublis
                     {pad(i + 2)} · {s.label}
                   </span>
                   <h3>
-                    <a href={`/.tool/${s.entry.id}`}>{s.entry.title}</a>
+                    <a href={launchOf(s.entry)}>{s.entry.title}</a>
                   </h3>
                   {s.deck ? <p class="deck">{s.deck}</p> : null}
                   <div class="story-foot">
-                    <a class="tlink" href={launchOf(s.entry)}>
-                      Open
+                    <a class="tlink quiet" href={`/.tool/${s.entry.id}`}>
+                      Details
                     </a>
                     <span class="by">{s.byline}</span>
                   </div>

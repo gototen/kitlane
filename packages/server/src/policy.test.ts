@@ -30,7 +30,11 @@ describe("publishing allowlist (KITLANE_PUBLISHERS)", () => {
   it("strangers can browse, launch, and use tools but cannot publish, copy, or claim names", async () => {
     const cookie = await h.portalCookie(stranger);
     expect((await h.req(`${PORTAL}/`, { cookie })).status).toBe(200);
-    expect((await h.req(`${PORTAL}/.search?q=prep`, { cookie })).status).toBe(200);
+    const search = await h.req(`${PORTAL}/.search?q=prep`, { cookie });
+    expect(search.status).toBe(200);
+    const results = await search.text();
+    expect(results).toContain('class="t" href="/prep"'); // the title opens the tool
+    expect(results).toContain(`href="/.tool/${toolId}">Details<`); // the tool page is the secondary link
     expect((await h.req(`${PORTAL}/prep`, { cookie })).status).toBe(200);
     const toolCookie = await h.toolCookie(stranger, toolId);
     const write = await h.req(`${h.toolOrigin(toolId)}/._kitlane/data/user/prefs/x`, { ...jsonInit("PUT", { data: { a: 1 } }, h.toolOrigin(toolId)), cookie: toolCookie });
