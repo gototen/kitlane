@@ -299,6 +299,36 @@ describe("publishing through the CLI API", () => {
       expect(original).toContain(`href="/.tool/${copy.id}"`);
     });
 
+    it("records lineage for a remix made from a repository (remixOf on claim)", async () => {
+      const t = await h.token(bob);
+      const me = await (await h.req(`${PORTAL}/.api/cli/me`, { headers: bearer(t) })).json();
+      const source = await (await h.req(`${PORTAL}/.api/cli/tools/${toolId}`, { headers: bearer(t) })).json();
+      const res = await h.req(`${PORTAL}/.api/cli/tools`, { ...jsonInit("POST", { name: "prep-fork", title: "Prep, forked", remixOf: `${me.shortcut}/${source.tool.names[0]}`, repoUrl: "https://github.com/bob/prep" }), headers: { "content-type": "application/json", ...bearer(t) } });
+      expect(res.status).toBe(201);
+      const fork = (await res.json()).tool;
+      expect(fork.copiedFrom).toEqual({ entryId: toolId, versionId: source.activeVersion?.id ?? null });
+      // Both tool pages link to each other, exactly like a remix made in the portal.
+      const original = await (await h.req(`${PORTAL}/.tool/${toolId}`, { cookie: await h.portalCookie(alice) })).text();
+      expect(original).toContain(`href="/.tool/${fork.id}"`);
+      const detail = await (await h.req(`${PORTAL}/.tool/${fork.id}`, { cookie: await h.portalCookie(bob) })).text();
+      expect(detail).toContain(`href="/.tool/${toolId}"`);
+      // An unknown source is a request error, and nothing is created.
+      const missing = await h.req(`${PORTAL}/.api/cli/tools`, { ...jsonInit("POST", { name: "prep-fork-nope", title: "x", remixOf: "no-such-tool" }), headers: { "content-type": "application/json", ...bearer(t) } });
+      expect(missing.status).toBe(400);
+      expect((await h.req(`${PORTAL}/.api/cli/tools/prep-fork-nope`, { headers: bearer(t) })).status).toBe(404);
+    });
+
+    it("offers a fork on the remix page when the tool has a repository", async () => {
+      const t = await h.token(alice);
+      const set = await h.req(`${PORTAL}/.api/cli/tools/${toolId}`, { ...jsonInit("PATCH", { repoUrl: "https://github.com/alice/prep" }), headers: { "content-type": "application/json", ...bearer(t) } });
+      expect(set.status).toBe(200);
+      const name = (await set.json()).tool.names[0];
+      const page = await (await h.req(`${PORTAL}/.tool/${toolId}/copy`, { cookie: await h.portalCookie(bob) })).text();
+      expect(page).toContain('href="https://github.com/alice/prep/fork"');
+      expect(page).toContain(`--remix-of ${name} --workflow`);
+      expect(page).toContain(`--name ${name}-bob`);
+    });
+
     it("downloads a version as tar.gz", async () => {
       const res = await h.req(`${PORTAL}/.tool/${toolId}/download/${versionId}`, { cookie: await h.portalCookie(bob) });
       expect(res.status).toBe(200);

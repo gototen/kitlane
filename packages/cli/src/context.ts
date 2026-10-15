@@ -60,6 +60,8 @@ export interface KitlaneJson {
   team?: string;
   /** The scheme the tool renders in, or "system" when it adapts to the OS; the shell matches its rail to it. */
   theme?: ThemeSetting;
+  /** The tool this one was remixed from (a name, "<shortcut>/<name>", or an ID). Recorded as lineage when the name is first claimed. */
+  remixOf?: string;
 }
 
 /** The validated optional theme from kitlane.json; an empty value means "not declared". */

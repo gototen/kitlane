@@ -1,6 +1,6 @@
 # CLI reference
 
-`kitlane` publishes static tools, registers URLs, and manages names, collections, grants, and updater credentials against a Kitlane portal. It is in `packages/cli` (npm package `kitlane`). Run it with `npx kitlane` from the repository or install it globally after publishing to a registry.
+`kitlane` publishes static tools, registers URLs, and manages names, collections, grants, and updater credentials against a Kitlane portal. It is in `packages/cli` (npm package `kitlane`). Every installation serves the CLI that matches it: `npm install -g https://kit.example.com/.static/kitlane-cli.tgz`. From this repository, `npx kitlane` works too.
 
 ```
 kitlane 0.2.0: publish, discover, and adapt the tools your colleagues make
@@ -60,10 +60,12 @@ Resolution order for the portal: `--portal`, then `KITLANE_URL`, then the stored
 
 ## Project files
 
-`kitlane init [dir]` writes:
+`kitlane init [dir] [--name <name>] [--remix-of <tool>] [--workflow]` writes:
 
 - `KITLANE.md`: platform guidance for people and coding agents (publishing contract, hosting constraints, SDK, storage modes, grants, updaters, adaptation, identity, what is not available, a cheat sheet). The content sits between `<!-- kitlane:start -->` and `<!-- kitlane:end -->`; re-running `init` refreshes only that section and leaves your notes alone.
 - `kitlane.json` (if missing): `{ "name", "title", "purpose", "tags", "theme", "deploy", "repoUrl" }`. `deploy` is detected: `./dist`, `./build`, `./public`, or `./out` containing `index.html`, else a root `index.html`, else `./dist`. `theme` is `"light"`, `"dark"`, or `"system"` (the template's default): the shell matches its Explore tools rail to the tool, `"system"` means the tool adapts to the OS, and without the field Kitlane reads the `<meta name="color-scheme">` tag from `index.html` at publish time.
+- `--name` and `--remix-of` set just those two fields in an existing `kitlane.json` and leave the rest alone (in a fresh one they fill the template). `remixOf` is a name, `kit/<name>`, or an ID: it is recorded as lineage when the name is first claimed, so the original maker stays credited and the remix shows on both tool pages.
+- `--workflow` writes `.github/workflows/kitlane.yml` if it is missing: a GitHub Actions workflow that builds when there is a `package.json`, installs the CLI from the portal, and publishes on every push to `main` or `master`. It needs the repository variable `KITLANE_URL` and the secret `KITLANE_TOKEN`.
 - If `AGENTS.md` or `CLAUDE.md` exist, a bounded pointer section is inserted or updated between the same markers: "This project publishes to Kitlane. Read KITLANE.md for ...". Existing files are never replaced or symlinked; if neither exists, nothing is created.
 
 `.kitlaneignore` (optional, next to the deploy folder) uses gitignore-like patterns: `*` within a segment, `**` across segments, a trailing `/` for directories, a leading `/` to anchor at the root, `#` comments.
@@ -71,7 +73,7 @@ Resolution order for the portal: `--portal`, then `KITLANE_URL`, then the stored
 ## Publishing
 
 ```
-kitlane publish [path] [--name <name>] [--title <t>] [--purpose <p>] [--tags a,b] [--note <msg>] [--no-activate] [--create]
+kitlane publish [path] [--name <name>] [--title <t>] [--purpose <p>] [--tags a,b] [--remix-of <tool>] [--note <msg>] [--no-activate] [--create]
 ```
 
 - `path` defaults to `deploy` in `kitlane.json`; `--name` defaults to `name` there.
@@ -81,6 +83,16 @@ kitlane publish [path] [--name <name>] [--title <t>] [--purpose <p>] [--tags a,b
 - When `theme` is set in `kitlane.json` and differs from the catalog, the CLI updates it before uploading and prints `Theme: dark (from kitlane.json)`. Any value other than `light`, `dark`, or `system` fails before anything is uploaded.
 - An upload identical to the active version is reported as unchanged and creates no version.
 - `--no-activate` uploads a version without making it active; activate it later with `rollback --version <n>`.
+- `--remix-of <tool>` (or `remixOf` in `kitlane.json`) records lineage when the name is claimed. For a tool that already exists it is ignored with a warning.
+- Publishing to a name that someone else maintains fails, with a hint to give your fork a name of its own.
+
+### Publish from a git repository
+
+1. In the repository: `kitlane init --workflow`. Commit `kitlane.json`, `KITLANE.md`, and `.github/workflows/kitlane.yml`.
+2. In the repository settings on GitHub (Secrets and variables, then Actions): the variable `KITLANE_URL` (the portal) and the secret `KITLANE_TOKEN` (a token from Yours, then Tokens). The token is personal, so what the workflow publishes is yours to maintain.
+3. Push. The workflow builds when there is a `package.json`, installs the CLI from `<portal>/.static/kitlane-cli.tgz`, and runs `kitlane publish --note "git <sha>"`. Output identical to the active version publishes nothing.
+
+Kitlane runs no build and never reads the repository; the workflow does the building. Nothing new is trusted on the server side: the workflow is the same CLI with the same personal token.
 
 ```
 kitlane register <url> --name <name> [--title <t>] [--purpose <p>] [--tags a,b] [--resource]
@@ -93,6 +105,18 @@ kitlane lifecycle <tool> <experimental|maintained|retired> [--replacement <tool-
 `--resource` registers a link (searchable, not recommended among tools) instead of an external tool.
 
 ## Discover and adapt
+
+### Remix a repository
+
+When a tool page shows a repository, prefer the source over the published files: a fork gives you what the maker works on, and your changes can go back as a pull request. The remix page in the portal offers **Fork on GitHub** and the exact commands:
+
+```
+git clone <your fork> && cd <repo>
+kitlane init --name <name>-<you> --remix-of <name> --workflow
+git commit -am "Remix of kit/<name>" && git push
+```
+
+The first publish claims the new name and records the lineage; the original maker stays credited on both tool pages.
 
 ```
 kitlane tools [--mine] [-q <query>]

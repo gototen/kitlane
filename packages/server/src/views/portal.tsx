@@ -26,6 +26,19 @@ const who = (e: EntryWithNames) => (e.creator_team ? `${e.creator_name}, ${e.cre
 const themeOf = (e: EntryWithNames): string | null => (e as { theme?: string | null }).theme ?? null;
 const prefOf = (u: User, key: "theme_pref" | "rail_pref", fallback: string): string => ((u as unknown as Record<string, string | undefined>)[key] ?? fallback);
 const pad = (n: number) => String(n).padStart(2, "0");
+/** A repository address shortened for display: "github.com/alice/prep". */
+const repoLabel = (url: string) => url.replace(/^https?:\/\//, "").replace(/\.git$/, "").replace(/\/$/, "");
+const repoBase = (url: string) => url.replace(/\/$/, "").replace(/\.git$/, "");
+const isGitHub = (url: string) => {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === "github.com" || host.startsWith("github.");
+  } catch {
+    return false;
+  }
+};
+/** "alice" from "Alice Nakamura": the suffix suggested for a remix's name. */
+const firstName = (u: User) => (u.display_name || "").split(/\s+/)[0]?.toLowerCase().replace(/[^a-z0-9]+/g, "") || "mine";
 
 const Tags: FC<{ tags: string[] }> = ({ tags }) =>
   tags.length ? (
@@ -1122,10 +1135,44 @@ export function toolDetailPage(config: Config, d: ToolDetailData) {
 /* ---------- Remix ---------- */
 
 export function copyPage(config: Config, user: User, source: EntryWithNames, error?: string) {
+  const name = source.names[0] ?? source.id;
+  const suggested = `${name}-${firstName(user)}`.slice(0, 63);
+  const repo = source.repo_url;
   return (
     <Layout config={config} title={`Remix ${source.title}`} user={user}>
       <section class="card narrow">
         <h2 style="font-size:2rem">Remix {source.title}</h2>
+        {repo ? (
+          <>
+            <h3 class="remix-h">From the source</h3>
+            <p class="prose">
+              {source.creator_name} keeps the source at{" "}
+              <a href={repo} rel="noopener noreferrer">
+                {repoLabel(repo)}
+              </a>
+              . A fork gives you the files they work on rather than the built output, and your changes can go back to them as a pull request.
+            </p>
+            <ol class="prose steps">
+              <li>
+                {isGitHub(repo) ? (
+                  <>
+                    <a class="btn sm" href={`${repoBase(repo)}/fork`} rel="noopener noreferrer">
+                      Fork on GitHub
+                    </a>{" "}
+                    and clone your fork.
+                  </>
+                ) : (
+                  "Fork or clone the repository."
+                )}
+              </li>
+              <li>
+                In your fork: <code>kitlane init --name {suggested} --remix-of {name} --workflow</code>
+              </li>
+              <li>Commit and push. The workflow publishes it here under your name, with {source.creator_name} credited. Or run <code>kitlane publish</code> yourself.</li>
+            </ol>
+            <h3 class="remix-h">Or from the published files</h3>
+          </>
+        ) : null}
         <p class="prose">
           The published files (HTML, JavaScript, CSS, assets) are duplicated into a new tool you own, with its own name and origin. {source.creator_name} stays credited as the original maker through visible lineage, and you become responsible for your version.
         </p>

@@ -72,7 +72,7 @@ or use the Admin page. Administrators can freeze and unfreeze tools and collecti
 
 ## 5. Verify the tool-host sign-in bootstrap
 
-Publish a first tool (create a token at `/.me#tokens`, then `kitlane login https://kit.example.com --token ...` and `kitlane publish`). Open it from the portal. The first launch should take one visible round trip through `app-<id>.sites.kit.example.com/.auth/callback` and return to the shell with the tool loaded; the browser's network log should show a `303` from the callback and then a `200` for `/_releases/<version>/index.html`. If the shell shows "Sign in to open this tool", check that cookies for `*.sites.kit.example.com` are allowed and that the DNS wildcard resolves. Also confirm **Open directly** works at the tool's origin.
+Publish a first tool. People install the CLI from the installation itself (`npm install -g https://kit.example.com/.static/kitlane-cli.tgz`), create a token at `/.me#tokens`, then `kitlane login https://kit.example.com --token ...` and `kitlane publish`; a repository can publish on every push with the workflow from `kitlane init --workflow` (see [cli.md](cli.md)). Open it from the portal. The first launch should take one visible round trip through `app-<id>.sites.kit.example.com/.auth/callback` and return to the shell with the tool loaded; the browser's network log should show a `303` from the callback and then a `200` for `/_releases/<version>/index.html`. If the shell shows "Sign in to open this tool", check that cookies for `*.sites.kit.example.com` are allowed and that the DNS wildcard resolves. Also confirm **Open directly** works at the tool's origin.
 
 ## 6. Backups
 

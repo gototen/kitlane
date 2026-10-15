@@ -70,7 +70,8 @@ export interface CreateEntryInput {
   team?: string | null;
   repoUrl?: string | null;
   externalUrl?: string | null;
-  copiedFrom?: { entryId: string; versionId: string } | null;
+  /** Lineage: the tool this one was remixed from, and the version that was active then (null when nothing was published). */
+  copiedFrom?: { entryId: string; versionId: string | null } | null;
   theme?: ThemeSetting | null;
 }
 

@@ -19,6 +19,7 @@ The rail is the primary discovery mechanism. A portal with search and browsing e
 | Portal: Today page with rule-based picks and an administrator override, search, filters, tool pages, lineage, name history, preferences, admin | Implemented |
 | Visual system: self-hosted type, light and dark themes, one stylesheet | Implemented, checked manually in Chrome at desktop and phone widths |
 | Remix with lineage (the original maker stays credited); download published files; `kitlane pull` | Implemented, tested |
+| Publishing from a git repository: `kitlane init --workflow` (GitHub Actions), the CLI served by each installation, remix by fork with lineage recorded on first publish | Implemented, tested |
 | Identity SDK, personal documents, shared collections, writer grants, updater credentials | Implemented, tested |
 | Discovery measurement with a north-star report | Implemented, tested |
 | Catalog export; operator backup and restore scripts | Implemented; scripts run once against the local stack |

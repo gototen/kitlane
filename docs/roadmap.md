@@ -23,6 +23,8 @@ What is deferred from v0.2 and what the build surfaced. None of these are promis
 - Server: optional external static server in front of the release volume, keyed by publication revision.
 - Server: validate `X-Forwarded-Proto` handling behind the ingress and document HSTS.
 - CLI: `kitlane login` device-style flow instead of paste; `kitlane status` for the configured portal.
+- Git integration, stage two: a GitHub App per installation that watches repositories carrying `kitlane.json`, deploys already-built files on push without a token per repository, offers a one-click fork remix that rewrites the manifest and records lineage, and links GitHub identity to the Kitlane account (through the enterprise's SAML or managed-user external identities where they exist, otherwise a one-time per-person link in Yours). Forks of internal tools must land inside the company's GitHub organisation. Stage one (workflow, served CLI, `remixOf`) shipped 2026-10-15.
+- Git integration, stage three: a managed multi-tenant service is a product decision, not a feature; it needs per-organisation sign-in, tenancy, and billing. Only if a pilot shows pull.
 - SDK: TypeScript types published to npm as `@kitlane/sdk`; the bundle is currently served from the server only.
 - Compose: health-condition `depends_on` once the minimum Compose version is raised; retention and log rotation guidance.
 

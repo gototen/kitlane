@@ -8,6 +8,7 @@ dist/
 /packages/server/data/
 /packages/server/public/*.js
 /packages/server/public/*.js.map
+/packages/server/public/*.tgz
 examples/*/dist/
 deploy/compose/data/
 deploy/compose/caddy-data/

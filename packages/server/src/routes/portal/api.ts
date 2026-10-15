@@ -14,6 +14,7 @@ import { findUserByHandle, getUser, publicIdentity } from "../../services/users.
 import { pseudonymousSessionKey } from "../../auth/identity.js";
 import { drawerFragment } from "../../views/portal.js";
 import { buildExport } from "../../services/export.js";
+import { audit } from "../../services/audit.js";
 
 function entryJson(config: any, e: entries.CreateEntryInput extends never ? never : any) {
   return {
@@ -104,13 +105,27 @@ export function apiApp(services: Services) {
     return e;
   }
 
+  /** A tool named in a request body: an ID, a name, or "<shortcut>/<name>". A bad reference is a request error. */
+  async function resolveRemixSource(ref: string) {
+    const trimmed = ref.trim();
+    const prefix = `${config.shortcut}/`.toLowerCase();
+    const bare = trimmed.toLowerCase().startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
+    const e = (await entries.getEntry(db, bare)) ?? (await entries.getEntryByName(db, bare));
+    if (!e || e.kind !== "tool") throw badRequest(`remixOf: no tool with ID or name "${ref}"`);
+    const active = e.mode === "hosted" ? await versions.getActiveVersion(db, e.id) : null;
+    return { entry: e, versionId: active?.id ?? null };
+  }
+
   cli.post("/tools", async (c) => {
     const u = user(c);
     entries.requirePublisher(config, u);
     const b = await c.req.json();
     const mode = b.mode === "external" ? "external" : "hosted";
-    const entry = await db.transaction((tx) =>
-      entries.createEntry(tx, userActor(u.id), u, {
+    // A remix made outside Kitlane, typically a fork of the maker's repository, records its lineage when its name is claimed.
+    const remixOf = typeof b.remixOf === "string" && b.remixOf.trim() ? await resolveRemixSource(b.remixOf) : null;
+    const actor = userActor(u.id);
+    const entry = await db.transaction(async (tx) => {
+      const created = await entries.createEntry(tx, actor, u, {
         kind: mode === "hosted" ? "tool" : b.kind === "resource" ? "resource" : "tool",
         mode,
         name: String(b.name ?? ""),
@@ -120,9 +135,15 @@ export function apiApp(services: Services) {
         team: typeof b.team === "string" ? b.team : null,
         repoUrl: typeof b.repoUrl === "string" ? b.repoUrl : null,
         externalUrl: typeof b.externalUrl === "string" ? b.externalUrl : null,
-        ...(b.theme !== undefined ? { theme: b.theme } : {}),
-      }),
-    );
+        copiedFrom: remixOf ? { entryId: remixOf.entry.id, versionId: remixOf.versionId } : null,
+        // The remix declares its own theme in its manifest; without one it keeps the original's.
+        ...(b.theme !== undefined ? { theme: b.theme } : remixOf?.entry.theme ? { theme: remixOf.entry.theme } : {}),
+      });
+      if (remixOf) {
+        await audit(tx, actor, { action: "entry.copied_from", entryId: remixOf.entry.id, targetType: "entry", targetId: created.id, details: { via: "repository", sourceVersionId: remixOf.versionId } });
+      }
+      return created;
+    });
     return c.json({ tool: entryJson(config, entry) }, 201);
   });
 

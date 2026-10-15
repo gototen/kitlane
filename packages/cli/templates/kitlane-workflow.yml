@@ -1,0 +1,42 @@
+# Publishes this tool to Kitlane on every push to the default branch.
+#
+# One-time setup, in the repository settings on GitHub (Secrets and variables, then Actions):
+#   Variable  KITLANE_URL    the portal, for example https://kit.example.com
+#   Secret    KITLANE_TOKEN  a token from the portal (Yours, then Tokens). It is personal:
+#                            what this workflow publishes is yours to maintain.
+#
+# Kitlane runs no build and never reads this repository; the workflow does the building.
+# If this project has no build step, the Build step below does nothing.
+name: Publish to Kitlane
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: kitlane-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        run: |
+          if [ -f package.json ]; then
+            if [ -f package-lock.json ]; then npm ci; else npm install; fi
+            npm run build --if-present
+          fi
+      - name: Install the Kitlane CLI from the portal
+        run: npm install -g "${KITLANE_URL%/}/.static/kitlane-cli.tgz"
+        env:
+          KITLANE_URL: ${{ vars.KITLANE_URL }}
+      - name: Publish
+        run: kitlane publish --note "git ${GITHUB_SHA}"
+        env:
+          KITLANE_URL: ${{ vars.KITLANE_URL }}
+          KITLANE_TOKEN: ${{ secrets.KITLANE_TOKEN }}

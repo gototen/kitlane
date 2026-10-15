@@ -51,6 +51,8 @@ The seed script publishes `kit/prep`, `kit/briefs-editor`, `kit/focus`, `kit/mee
 
 ### CLI against the local server
 
+`npx kitlane` runs the CLI from this repository. An installation also serves it, so `npm install -g http://kit.localhost:3000/.static/kitlane-cli.tgz` gives a plain `kitlane` command that matches the server.
+
 Create a token at <http://kit.localhost:3000/.me#tokens>, then:
 
 ```sh

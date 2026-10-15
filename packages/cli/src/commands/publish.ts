@@ -7,13 +7,14 @@ import { packTarget } from "../pack.js";
 export const publish: Command = {
   name: "publish",
   summary: "Upload a single HTML file or a prepared folder as a new immutable version",
-  usage: "kitlane publish [path] [--name <name>] [--title <t>] [--purpose <p>] [--tags a,b] [--note <msg>] [--no-activate] [--create]",
+  usage: "kitlane publish [path] [--name <name>] [--title <t>] [--purpose <p>] [--tags a,b] [--remix-of <tool>] [--note <msg>] [--no-activate] [--create]",
   async run(args, ctx) {
     const { values, positionals } = parse(args, {
       name: { type: "string" },
       title: { type: "string" },
       purpose: { type: "string" },
       tags: { type: "string" },
+      "remix-of": { type: "string" },
       note: { type: "string" },
       "no-activate": { type: "boolean", default: false },
       create: { type: "boolean", default: false },
@@ -24,6 +25,7 @@ export const publish: Command = {
     const name = ((values.name as string | undefined) ?? meta?.name ?? "").trim().toLowerCase();
     if (!name) throw new Error("Give --name <name> or set \"name\" in kitlane.json.");
     const theme = themeOf(meta);
+    const remixOf = ((values["remix-of"] as string | undefined) ?? meta?.remixOf ?? "").trim() || undefined;
 
     const packed = await packTarget(path.resolve(target));
     for (const s of packed.skippedSymlinks) warn(`skipping symlink: ${s}`);
@@ -34,6 +36,7 @@ export const publish: Command = {
     const client = clientFor(ctx);
     const me = await client.get<{ shortcut: string }>("/me");
     let tool: any;
+    let claimed = false;
     try {
       tool = (await client.get(`/tools/${encodeURIComponent(name)}`)).tool;
     } catch (err) {
@@ -48,22 +51,38 @@ export const publish: Command = {
         repoUrl: meta?.repoUrl,
         team: meta?.team,
         theme,
+        remixOf,
       });
       tool = created.tool;
+      claimed = true;
       if (!ctx.json) println(`Claimed ${me.shortcut}/${name}`);
       if (theme && !ctx.json) println(`Theme: ${theme} (from kitlane.json)`);
+      if (remixOf && !ctx.json) println(`Lineage: a remix of ${remixOf}. The original maker stays credited on your tool page.`);
     }
     if (tool.mode !== "hosted") throw new Error(`${me.shortcut}/${name} is an external entry; it has no hosted files to publish.`);
-    if (theme && tool.theme !== theme) {
-      // The manifest is the source of truth for the declared theme; align the catalog before uploading.
-      tool = (await client.patch(`/tools/${tool.id}`, { theme })).tool;
-      if (!ctx.json) println(`Theme: ${theme} (from kitlane.json)`);
+    if (remixOf && !claimed && !tool.copiedFrom) {
+      warn(`remixOf is recorded only when a name is first claimed; ${me.shortcut}/${name} already exists without lineage.`);
     }
+    // A name that someone else maintains answers 403 below. In a fork that usually means the manifest still carries the original's name.
+    const explain = (err: unknown) =>
+      err instanceof ApiError && err.status === 403 && !claimed
+        ? new Error(`${err.message}\n${me.shortcut}/${name} is maintained by someone else. If this is your fork of their tool, give it a name of its own: \`kitlane init --name <new-name> --remix-of ${name}\`, then publish again.`)
+        : err;
 
-    const headers: Record<string, string> = {};
-    if (values.note) headers["x-kitlane-note"] = String(values.note);
-    const query = values["no-activate"] ? "?activate=0" : "";
-    const result = await client.upload(`/tools/${tool.id}/versions${query}`, packed.stream, headers);
+    let result: any;
+    try {
+      if (theme && tool.theme !== theme) {
+        // The manifest is the source of truth for the declared theme; align the catalog before uploading.
+        tool = (await client.patch(`/tools/${tool.id}`, { theme })).tool;
+        if (!ctx.json) println(`Theme: ${theme} (from kitlane.json)`);
+      }
+      const headers: Record<string, string> = {};
+      if (values.note) headers["x-kitlane-note"] = String(values.note);
+      const query = values["no-activate"] ? "?activate=0" : "";
+      result = await client.upload(`/tools/${tool.id}/versions${query}`, packed.stream, headers);
+    } catch (err) {
+      throw explain(err);
+    }
     if (ctx.json) return printJson({ tool: { id: tool.id, name }, ...result });
     if (result.unchanged) {
       println(`Unchanged: identical to the active version (v${result.version.number}). Nothing published.`);

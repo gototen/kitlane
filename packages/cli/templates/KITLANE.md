@@ -21,6 +21,9 @@ collections through a small browser SDK. Metadata for this project lives in `kit
 - No source bundle, repository, or prompt history is required. A repository link is optional.
 - Every publish creates an immutable version; one version is active. Maintainers can roll back.
 - Command: `kitlane publish [path] --name <name>`. The name is claimed on first publish.
+- From a git repository: `kitlane init --workflow` adds a GitHub Actions workflow that publishes on
+  every push (repository variable `KITLANE_URL`, secret `KITLANE_TOKEN`). The workflow builds;
+  Kitlane never reads the repository.
 
 ## Theme
 
@@ -120,7 +123,10 @@ updates on their next fetch (`listIfChanged`, `onRefresh`).
 
 ## Adapting someone else's tool
 
-1. `kitlane remix <name> --name <yours>` (or **Remix** in the portal), then `kitlane pull <yours>`.
+0. If the tool page shows a repository, prefer the source: fork it, run
+   `kitlane init --name <yours> --remix-of <name> --workflow` in the fork, and push. Lineage is
+   recorded when the name is first claimed.
+1. Otherwise `kitlane remix <name> --name <yours>` (or **Remix** in the portal), then `kitlane pull <yours>`.
    `kitlane copy` still works as an alias of `remix`.
 2. Edit the files with any agent or builder. Minified bundles are fine; infer from behaviour.
 3. `kitlane publish <dir> --name <yours>`. Lineage credits the original creator.

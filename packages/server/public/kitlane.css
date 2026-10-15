@@ -124,6 +124,7 @@ legend{font:700 .95rem var(--display);margin-bottom:.4rem;padding:0}
 .card h3{margin:.6rem 0 .4rem}
 .notice{background:var(--surface);border:1px solid var(--rule2);border-left:3px solid var(--accent);padding:.65rem .9rem;border-radius:4px;margin:0 0 1rem}
 .error{background:var(--surface);border:1px solid var(--danger);padding:.65rem .9rem;border-radius:4px;color:var(--danger);margin:0 0 1rem}
+.remix-h{font:700 1.05rem/1.3 var(--display);margin:1.4rem 0 .4rem}.steps{padding-left:1.3rem}.steps li{margin:.35rem 0}.steps .btn.sm{vertical-align:baseline}
 .panel-note{font:400 .88rem/1.5 var(--serif);color:var(--sec);margin:0 0 .8rem}
 
 /* ---------- Page structure ---------- */
