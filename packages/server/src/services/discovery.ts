@@ -45,10 +45,26 @@ export async function recordDiscoveryEvent(q: Queryable, input: DiscoveryEventIn
   );
 }
 
+export type MeasurementCohort = "all" | "assigned";
+
+export interface CohortParticipant {
+  userId: string;
+  name: string;
+  email: string | null;
+  team: string | null;
+  railOpportunities: number;
+  drawerOpens: number;
+  picksLaunched: number;
+  activeDays: number;
+  lastSeenAt: string | null;
+  discoveries: { targetEntryId: string; title: string; firstAt: string; returned: boolean }[];
+}
+
 export interface MeasurementReport {
   since: string;
+  cohort: MeasurementCohort;
   stages: { opportunity: number; engagement: number; discovery: number; accessEvents: number };
-  cohort: { eligibleUsers: number; usersWithRailOpportunity: number };
+  eligible: { eligibleUsers: number; usersWithRailOpportunity: number };
   railOriginated: {
     pairs: number;
     returningWithin7Days: number;
@@ -57,6 +73,8 @@ export interface MeasurementReport {
   };
   bySourceTool: { source_entry_id: string; title: string; launches: number }[];
   assignedTeams: number;
+  /** Present for the assigned-team cohort only: one row per participant, for the facilitator's follow-ups. */
+  participants?: CohortParticipant[];
   notes: string[];
 }
 
@@ -64,27 +82,30 @@ export interface MeasurementReport {
  * North star: unique user/tool pairs whose first recorded launch of the target came through the
  * rail, where the user's team differs from the target creator's team, and the user returned on a
  * later day within seven days. Creators and maintainers testing their own tools are excluded.
+ *
+ * The "assigned" cohort limits every measure to people whose team an administrator assigned, which
+ * is how a study on a public installation separates its participants from passers-by.
  */
-export async function measurementReport(q: Queryable, sinceDays = 30): Promise<MeasurementReport> {
+export async function measurementReport(q: Queryable, sinceDays = 30, cohort: MeasurementCohort = "all"): Promise<MeasurementReport> {
   const since = new Date(Date.now() - sinceDays * 86400_000);
+  const inCohort = (col: string) => (cohort === "assigned" ? ` AND ${col} IN (SELECT id FROM users WHERE team_locked)` : "");
   const stages = await q.query<{ event_type: string; n: number }>(
-    `SELECT event_type, count(*)::int AS n FROM discovery_events WHERE at >= $1 GROUP BY event_type`,
+    `SELECT event_type, count(*)::int AS n FROM discovery_events WHERE at >= $1${inCohort("user_id")} GROUP BY event_type`,
     [since],
   );
   const count = (t: string) => stages.rows.find((r) => r.event_type === t)?.n ?? 0;
 
-  const cohort = await q.query<{ eligible: number; with_rail: number }>(
-    `SELECT (SELECT count(*)::int FROM users WHERE NOT is_dev_user OR TRUE) AS eligible,
-            (SELECT count(DISTINCT user_id)::int FROM discovery_events WHERE event_type = 'rail_rendered' AND at >= $1) AS with_rail`,
+  const eligible = await q.query<{ eligible: number; with_rail: number }>(
+    `SELECT (SELECT count(*)::int FROM users WHERE ${cohort === "assigned" ? "team_locked" : "TRUE"}) AS eligible,
+            (SELECT count(DISTINCT user_id)::int FROM discovery_events WHERE event_type = 'rail_rendered' AND at >= $1${inCohort("user_id")}) AS with_rail`,
     [since],
   );
 
   // First launch per (user, target), excluding maintainers of the target.
-  const rail = await q.query<{ pairs: number; returning: number; cross_team: number; unknown_team: number }>(
-    `WITH launches AS (
+  const railCtes = `WITH launches AS (
        SELECT user_id, target_entry_id, at, event_type, user_team, target_creator_team
        FROM discovery_events
-       WHERE at >= $1 AND user_id IS NOT NULL AND target_entry_id IS NOT NULL
+       WHERE at >= $1 AND user_id IS NOT NULL AND target_entry_id IS NOT NULL${inCohort("user_id")}
          AND event_type IN ('recommendation_launched', 'tool_accessed', 'portal_launched')
          AND NOT EXISTS (SELECT 1 FROM maintainers m WHERE m.entry_id = discovery_events.target_entry_id AND m.user_id = discovery_events.user_id)
      ),
@@ -92,15 +113,17 @@ export async function measurementReport(q: Queryable, sinceDays = 30): Promise<M
        SELECT DISTINCT ON (user_id, target_entry_id) user_id, target_entry_id, at AS first_at, event_type AS first_type, user_team, target_creator_team
        FROM launches ORDER BY user_id, target_entry_id, at ASC
      ),
-     rail_first AS (SELECT * FROM firsts WHERE first_type = 'recommendation_launched'),
-     returners AS (
-       SELECT rf.* FROM rail_first rf
-       WHERE EXISTS (
+     rail_first AS (
+       SELECT rf.*, EXISTS (
          SELECT 1 FROM launches l WHERE l.user_id = rf.user_id AND l.target_entry_id = rf.target_entry_id
            AND l.at > rf.first_at AND l.at <= rf.first_at + interval '7 days'
            AND date_trunc('day', l.at) > date_trunc('day', rf.first_at)
-       )
-     )
+       ) AS returned
+       FROM firsts rf WHERE rf.first_type = 'recommendation_launched'
+     ),
+     returners AS (SELECT * FROM rail_first WHERE returned)`;
+  const rail = await q.query<{ pairs: number; returning: number; cross_team: number; unknown_team: number }>(
+    `${railCtes}
      SELECT (SELECT count(*)::int FROM rail_first) AS pairs,
             (SELECT count(*)::int FROM returners) AS returning,
             (SELECT count(*)::int FROM returners WHERE user_team IS NOT NULL AND target_creator_team IS NOT NULL AND user_team <> target_creator_team) AS cross_team,
@@ -110,16 +133,50 @@ export async function measurementReport(q: Queryable, sinceDays = 30): Promise<M
 
   const bySource = await q.query<{ source_entry_id: string; title: string; launches: number }>(
     `SELECT d.source_entry_id, e.title, count(*)::int AS launches FROM discovery_events d JOIN entries e ON e.id = d.source_entry_id
-     WHERE d.event_type = 'recommendation_launched' AND d.at >= $1 GROUP BY d.source_entry_id, e.title ORDER BY launches DESC LIMIT 20`,
+     WHERE d.event_type = 'recommendation_launched' AND d.at >= $1${inCohort("d.user_id")} GROUP BY d.source_entry_id, e.title ORDER BY launches DESC LIMIT 20`,
     [since],
   );
+
+  let participants: CohortParticipant[] | undefined;
+  if (cohort === "assigned") {
+    const people = await q.query<{ id: string; display_name: string; email: string | null; team: string | null; last_seen_at: Date | null; rail: number; drawer: number; picks: number; active_days: number }>(
+      `SELECT u.id, u.display_name, u.email, u.team, u.last_seen_at,
+              count(d.id) FILTER (WHERE d.event_type = 'rail_rendered')::int AS rail,
+              count(d.id) FILTER (WHERE d.event_type = 'drawer_opened')::int AS drawer,
+              count(d.id) FILTER (WHERE d.event_type = 'recommendation_launched')::int AS picks,
+              count(DISTINCT date_trunc('day', d.at))::int AS active_days
+       FROM users u LEFT JOIN discovery_events d ON d.user_id = u.id AND d.at >= $1
+       WHERE u.team_locked GROUP BY u.id ORDER BY u.display_name`,
+      [since],
+    );
+    const found = await q.query<{ user_id: string; target_entry_id: string; title: string; first_at: Date; returned: boolean }>(
+      `${railCtes}
+       SELECT rf.user_id, rf.target_entry_id, e.title, rf.first_at, rf.returned FROM rail_first rf JOIN entries e ON e.id = rf.target_entry_id ORDER BY rf.first_at`,
+      [since],
+    );
+    participants = people.rows.map((p) => ({
+      userId: p.id,
+      name: p.display_name,
+      email: p.email,
+      team: p.team,
+      railOpportunities: p.rail,
+      drawerOpens: p.drawer,
+      picksLaunched: p.picks,
+      activeDays: p.active_days,
+      lastSeenAt: p.last_seen_at ? new Date(p.last_seen_at).toISOString() : null,
+      discoveries: found.rows
+        .filter((f) => f.user_id === p.id)
+        .map((f) => ({ targetEntryId: f.target_entry_id, title: f.title, firstAt: new Date(f.first_at).toISOString(), returned: f.returned })),
+    }));
+  }
 
   const assigned = await q.query<{ n: number }>(`SELECT count(*)::int AS n FROM users WHERE team_locked`);
   return {
     since: since.toISOString(),
+    cohort,
     assignedTeams: assigned.rows[0].n,
     stages: { opportunity: count("rail_rendered"), engagement: count("drawer_opened"), discovery: count("recommendation_launched"), accessEvents: count("tool_accessed") },
-    cohort: { eligibleUsers: cohort.rows[0].eligible, usersWithRailOpportunity: cohort.rows[0].with_rail },
+    eligible: { eligibleUsers: eligible.rows[0].eligible, usersWithRailOpportunity: eligible.rows[0].with_rail },
     railOriginated: {
       pairs: rail.rows[0].pairs,
       returningWithin7Days: rail.rows[0].returning,
@@ -127,6 +184,7 @@ export async function measurementReport(q: Queryable, sinceDays = 30): Promise<M
       unknownTeamReturning: rail.rows[0].unknown_team,
     },
     bySourceTool: bySource.rows,
+    participants,
     notes: [
       "A rail-rendered event is an opportunity, not proof the person noticed the rail.",
       "A first recorded launch is not proof the person had never used the tool; confirm prior familiarity in follow-ups.",

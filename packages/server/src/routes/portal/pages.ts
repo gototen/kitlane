@@ -443,7 +443,9 @@ export function pagesApp(services: Services) {
   app.get("/.admin/measurement", async (c) => {
     const u = user(c);
     entries.requireAdmin(u);
-    return c.html(measurementPage(config, u, await measurementReport(db, Number(c.req.query("days") ?? 30))));
+    const days = Math.min(Math.max(Math.trunc(Number(c.req.query("days") ?? 30)) || 30, 1), 3650);
+    const cohort = c.req.query("cohort") === "assigned" ? "assigned" : "all";
+    return c.html(measurementPage(config, u, await measurementReport(db, days, cohort), days));
   });
   app.post("/.admin/names/reserve", async (c) => {
     const u = user(c);

@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PORTAL, createHarness, jsonInit, type Harness } from "./test/harness.js";
 import { measurementReport } from "./services/discovery.js";
+import { setUserTeam } from "./services/users.js";
 
 let h: Harness;
 
@@ -43,6 +44,33 @@ describe("discovery measurement", () => {
     expect(report2.railOriginated.pairs).toBe(1);
   });
 
+  it("the assigned-team cohort counts only study participants and lists them", async () => {
+    const maker = await h.user("maker", { team: "research" });
+    const erin = await h.user("erin");
+    const frank = await h.user("frank");
+    await setUserTeam(h.db, erin.id, "Design");
+    const source = await h.publish(maker, "src-tool", { "index.html": "<h1>s</h1>" }, { tags: ["pilot"] });
+    const target = await h.publish(maker, "dst-tool", { "index.html": "<h1>d</h1>" }, { tags: ["pilot"] });
+    for (const person of [erin, frank]) {
+      const cookie = await h.portalCookie(person);
+      const send = (body: unknown) => h.req(`${PORTAL}/.api/discovery`, { ...jsonInit("POST", body, PORTAL), cookie });
+      await send({ type: "rail_rendered", sourceEntryId: source.id });
+      await send({ type: "drawer_opened", sourceEntryId: source.id });
+      await send({ type: "recommendation_launched", sourceEntryId: source.id, targetEntryId: target.id, placement: 1, reason: "shared_tag" });
+    }
+    const everyone = await measurementReport(h.db, 30);
+    expect(everyone.participants).toBeUndefined();
+    const study = await measurementReport(h.db, 30, "assigned");
+    expect(study.cohort).toBe("assigned");
+    expect(study.stages).toMatchObject({ opportunity: 1, engagement: 1, discovery: 1 });
+    expect(study.eligible).toEqual({ eligibleUsers: 1, usersWithRailOpportunity: 1 });
+    expect(study.railOriginated.pairs).toBe(1);
+    expect(study.participants).toHaveLength(1);
+    expect(study.participants![0]).toMatchObject({ name: erin.display_name, team: "design", railOpportunities: 1, drawerOpens: 1, picksLaunched: 1, activeDays: 1 });
+    expect(study.participants![0].discoveries).toMatchObject([{ targetEntryId: target.id, returned: false }]);
+    expect(everyone.stages.discovery - study.stages.discovery).toBeGreaterThanOrEqual(1);
+  });
+
   it("admin measurement page renders; non-admins are refused", async () => {
     const bob = await h.user("bob2");
     const admin = await h.user("root", { admin: true });
@@ -50,5 +78,8 @@ describe("discovery measurement", () => {
     const ok = await h.req(`${PORTAL}/.admin/measurement`, { cookie: await h.portalCookie(admin) });
     expect(ok.status).toBe(200);
     expect(await ok.text()).toContain("North star");
+    const study = await h.req(`${PORTAL}/.admin/measurement?cohort=assigned&days=14`, { cookie: await h.portalCookie(admin) });
+    expect(study.status).toBe(200);
+    expect(await study.text()).toContain("Study participants");
   });
 });

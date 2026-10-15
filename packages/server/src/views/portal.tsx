@@ -1603,12 +1603,22 @@ export function adminPage(config: Config, user: User, frozenEntries: EntryWithNa
   );
 }
 
-export function measurementPage(config: Config, user: User, report: MeasurementReport) {
+export function measurementPage(config: Config, user: User, report: MeasurementReport, days: number) {
   const s = report.stages;
+  const assigned = report.cohort === "assigned";
+  const cohortLink = (c: "all" | "assigned", label: string) =>
+    report.cohort === c ? (
+      <strong aria-current="page">{label}</strong>
+    ) : (
+      <a href={`/.admin/measurement?days=${days}${c === "assigned" ? "&cohort=assigned" : ""}`}>{label}</a>
+    );
   return (
     <Layout config={config} title="Discovery measurement" user={user} nav="admin">
       <h1 style="margin-bottom:.4rem">How discovery is measured</h1>
-      <p class="deck" style="margin-bottom:1rem">Since {formatDate(report.since)}. Pseudonymous identifiers only; no prompt text, tool inputs, or query strings are recorded.</p>
+      <p class="deck" style="margin-bottom:.6rem">Since {formatDate(report.since)}. Pseudonymous identifiers only; no prompt text, tool inputs, or query strings are recorded.</p>
+      <p class="prose" style="margin-bottom:1rem">
+        Counting: {cohortLink("all", "everyone signed in")} · {cohortLink("assigned", `study cohort (${report.assignedTeams} with assigned teams)`)}
+      </p>
       <div class="stats">
         <div class="stat">
           <span class="stat-label">Opportunity: rail rendered</span>
@@ -1633,8 +1643,11 @@ export function measurementPage(config: Config, user: User, report: MeasurementR
       <table class="table">
         <tbody>
           <tr>
-            <td>Eligible people with at least one rail opportunity</td>
-            <td class="num">{report.cohort.usersWithRailOpportunity}</td>
+            <td>{assigned ? "Cohort members with at least one rail opportunity" : "Eligible people with at least one rail opportunity"}</td>
+            <td class="num">
+              {report.eligible.usersWithRailOpportunity}
+              {assigned ? <span class="muted"> of {report.eligible.eligibleUsers}</span> : null}
+            </td>
           </tr>
           <tr>
             <td>Person/tool pairs whose first recorded launch came through the rail</td>
@@ -1677,6 +1690,58 @@ export function measurementPage(config: Config, user: User, report: MeasurementR
           ))}
         </tbody>
       </table>
+      {report.participants ? (
+        <>
+          <div class="sect section">
+            <h2>Study participants</h2>
+          </div>
+          <p class="panel-note">For the facilitator's follow-ups only. Aggregate before sharing anything from this table, and never publish names.</p>
+          <div class="table-wrap">
+            <table class="table small">
+              <thead>
+                <tr>
+                  <th>Person</th>
+                  <th>Team</th>
+                  <th>Active days</th>
+                  <th>Rail</th>
+                  <th>Drawer</th>
+                  <th>Picks</th>
+                  <th>First reached through the rail</th>
+                  <th>Last seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.participants.map((p) => (
+                  <tr>
+                    <td>
+                      {p.name}
+                      {p.email ? <span class="muted"> · {p.email}</span> : null}
+                    </td>
+                    <td>{p.team ?? <span class="muted">unknown</span>}</td>
+                    <td class="num">{p.activeDays}</td>
+                    <td class="num">{p.railOpportunities}</td>
+                    <td class="num">{p.drawerOpens}</td>
+                    <td class="num">{p.picksLaunched}</td>
+                    <td>
+                      {p.discoveries.length ? (
+                        p.discoveries.map((d) => (
+                          <div>
+                            <a href={`/.tool/${d.targetEntryId}`}>{d.title}</a> <span class="muted">{formatDate(d.firstAt)}</span>
+                            {d.returned ? <span class="badge active"> returned</span> : null}
+                          </div>
+                        ))
+                      ) : (
+                        <span class="muted">none yet</span>
+                      )}
+                    </td>
+                    <td>{formatAgo(p.lastSeenAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
       {report.assignedTeams ? <p class="notice">{report.assignedTeams} person(s) have administrator-assigned teams. Treat team-based numbers as a usability study result, not organizational adoption.</p> : null}
       <div class="sect section">
         <h2>Interpretation limits</h2>

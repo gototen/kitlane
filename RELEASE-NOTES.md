@@ -29,7 +29,7 @@ Build started 2026-10-06. Release target 2026-10-24. The specification's week-1 
 - Document storage on PostgreSQL JSONB: personal isolation by installation, tool, user, collection, and document; shared collections with stable IDs, bindings, user and tool writer grants, revisions, quotas, per-user-per-tool rate limits; updater credentials with collection and operation scopes, expiry, and revocation; collection freeze.
 - Discovery measurement events and a north-star report with stated limits.
 - `kitlane init` with bounded guidance (`KITLANE.md`, `kitlane.json`, pointer in `AGENTS.md`/`CLAUDE.md`); `kitlane pull` with safe extraction.
-- Administrator-assigned teams (`/.admin`, migration `002_team_lock`): a team label kept across sign-ins until cleared, for studies where the identity provider supplies none; the measurement report counts assigned teams and labels the result.
+- Administrator-assigned teams (`/.admin`, migration `002_team_lock`): a team label kept across sign-ins until cleared, for studies where the identity provider supplies none; the measurement report counts assigned teams and labels the result. Its study-cohort view (`/.admin/measurement?cohort=assigned`) limits every measure to people with assigned teams, so a study on a public installation excludes passers-by, and lists each participant's activity and rail-first discoveries for the facilitator's follow-ups.
 - Operator policy for public demonstrations: `KITLANE_PUBLISHERS` restricts creating entries, uploading versions, copying, and claiming names to listed accounts and administrators (everyone else can still sign in, browse, launch, and use tools); `KITLANE_BANNER` shows a notice on every portal page and in the drawer; `scripts/reset-demo.sh` reloads the seed on a schedule. Guide: `docs/install-public-demo.md`.
 - Development identity (local only) and seed data: four hosted tools, two links, one shared collection with twelve synthetic briefs, grants, and an updater credential; `examples/updater/refresh-briefs.mjs`.
 - Docker Compose reference package: control service, Postgres 16, oauth2-proxy 7.7.1, Caddy 2.8; local profile with Keycloak 26 and an internal CA; team profile with ACME and on-demand TLS gated by a host check; setup, CA trust, backup, and restore scripts; server subcommands `migrate`, `doctor`, `seed`, `revoke-updaters`, `grant-admin`.
@@ -59,7 +59,7 @@ Build started 2026-10-06. Release target 2026-10-24. The specification's week-1 
 
 ### Not performed
 
-- Pilot study and seven-day follow-up.
+- Pilot study and seven-day follow-up. Prepared on 2026-10-15 (runbook, invitation, session guide, and results template in `docs/pilot/`): a small usability study on the public demo with personal Google accounts and assigned teams. It is decoupled from the release date so every participant gets a full seven-day window; its result will be added here when the last follow-up is done.
 - Independent installation validation by someone outside the project.
 - Two-builder adaptation verification (procedure in `docs/adaptation.md`).
 - Capacity measurement.

@@ -45,7 +45,7 @@ There is no invented numerical success threshold for a first small cohort. The r
 
 ## Pilot protocol (not yet performed)
 
-Summarised from specification section 11; none of it has been run for this release.
+Summarised from specification section 11; none of it has been run for this release. The runbook and materials for the first study are in [pilot/](pilot/README.md).
 
 1. Recruit a small cohort with a recurring reason to use a seed tool and a plausible reason to use another creator's tool. If team identities or scenarios are simulated, label the result a usability study.
 2. Let participants use the first seed tool for a few days before the session so familiarity is real.
@@ -55,7 +55,7 @@ Summarised from specification section 11; none of it has been run for this relea
 
 ## Running the report
 
-Sign in as an administrator and open `/.admin/measurement`. Programmatically, `measurementReport(db, days)` in `packages/server/src/services/discovery.ts` returns the same structure as JSON.
+Sign in as an administrator and open `/.admin/measurement`. Add `cohort=assigned` (for example `/.admin/measurement?cohort=assigned&days=60`) to limit every measure to people with assigned teams and to list them for the facilitator's follow-ups. Programmatically, `measurementReport(db, days, cohort)` in `packages/server/src/services/discovery.ts` returns the same structure as JSON.
 
 ## Assigned teams for studies
 

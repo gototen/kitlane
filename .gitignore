@@ -19,3 +19,6 @@ deploy/compose/backups/
 deploy/compose/caddy-local-root.crt
 # Installation-specific extra Caddy sites (keep the .example in git)
 deploy/compose/caddy/sites/*.caddy
+
+# Pilot observation notes and rosters (personal data; keep outside the repository)
+pilot-records/

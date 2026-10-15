@@ -90,7 +90,7 @@ Migrations run on start. Read the release notes before upgrading; back up first.
 
 ## 8. Operating notes
 
-- Policy before a real-data pilot: decide content rules, outbound-network allowances (`KITLANE_HOSTED_CONNECT_SRC` and friends), retention for personal and shared data and for discovery events, and whether any model gateway will be enabled later. Discovery events are not pruned automatically; run `DELETE FROM discovery_events WHERE at < now() - interval '90 days'` on your chosen schedule.
+- Policy before a real-data pilot: decide content rules, outbound-network allowances (`KITLANE_HOSTED_CONNECT_SRC` and friends), retention for personal and shared data and for discovery events, and whether any model gateway will be enabled later. Discovery events older than `KITLANE_DISCOVERY_RETENTION_DAYS` (default 90) are pruned automatically while the control service runs; set it to 0 to manage retention yourself (see [measurement.md](measurement.md)).
 - Limits are configured by environment; defaults are listed in [hosting-constraints.md](hosting-constraints.md).
 - Capacity has not been measured. The control service streams release files from a local volume and serves pages from one Node process; a small team on one server is the design point. Measure before promising more.
 - Logs: the control service logs startup and unhandled errors to standard output; it does not log request bodies.
